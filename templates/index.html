@@ -76,7 +76,7 @@
                             <input type="text"
                                    class="form-control"
                                    name="file"
-                                   value="../../../secret/flag.txt">
+                                   value="../../secret/flag.txt">
                         </div>
                         <div class="col-3 d-grid">
                             <button type="submit" class="btn btn-danger">Hack It</button>
@@ -84,7 +84,7 @@
                     </form>
 
                     <p class="mt-2 text-muted small">
-                        The new path requires three `../` to get to the root before accessing `secret/flag.txt`.
+                        The path requires two `../` to get to the root before accessing `secret/flag.txt`.
                         Try finding `another_secret.txt` as well.
                     </p>
 
@@ -136,7 +136,7 @@ return send_file(path)
                             <input type="text"
                                    class="form-control"
                                    name="file"
-                                   value="../../../secret/flag.txt">
+                                   value="../../secret/flag.txt">
                         </div>
                         <div class="col-3 d-grid">
                             <button type="submit" class="btn btn-success">Attempt</button>
