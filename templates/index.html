@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Path Traversal Advanced Demo</title>
+    <title>Web Security Vulnerabilities Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS (CDN) -->
@@ -34,13 +34,54 @@
     <div class="container-fluid">
         <a class="navbar-brand" href="#">
             <i class="bi bi-shield-lock"></i>
-            Path Traversal Demo
+            Web Security Vulnerabilities Demo
         </a>
+
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-body-secondary small">
+                Signed in as <strong>{{ user_email }}</strong>
+            </span>
+            <a class="btn btn-sm btn-outline-light" href="/logout">
+                <i class="bi bi-box-arrow-right"></i>
+                Logout
+            </a>
+        </div>
     </div>
 </nav>
 
 <div class="container">
+    <!-- Attack Chains Section -->
+    <div class="alert alert-warning border-warning mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="mb-2"><i class="bi bi-link-45deg"></i> Attack Chain Demonstrations</h4>
+                <p class="mb-0">
+                    See how vulnerabilities can be combined for more powerful exploits. Each chain shows a realistic attack scenario.
+                </p>
+            </div>
+            <div class="col-md-4">
+                <div class="d-grid gap-2">
+                    <a href="/attack_chain_1" class="btn btn-warning" target="_blank">
+                        <i class="bi bi-1-circle"></i> SQL → Command → Path
+                    </a>
+                    <a href="/attack_chain_2" class="btn btn-warning" target="_blank">
+                        <i class="bi bi-2-circle"></i> XSS → Session → CSRF
+                    </a>
+                    <a href="/attack_chain_3" class="btn btn-warning" target="_blank">
+                        <i class="bi bi-3-circle"></i> Command → Path (Interactive)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="mb-4">Individual Vulnerability Demonstrations</h2>
+
+    <!-- Path Traversal Demo Section -->
     <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-folder"></i> Path Traversal Demo</h3>
+        </div>
         <!-- Vulnerable Section -->
         <div class="col-md-6">
             <div class="card border-danger-subtle">
@@ -85,7 +126,8 @@
 
                     <p class="mt-2 text-muted small">
                         The path requires two `../` to get to the root before accessing `secret/flag.txt`.
-                        Try finding `another_secret.txt` as well.
+                        Try finding `another_secret.txt` as well.<br>
+                        <strong>💡 Hint:</strong> Try just <code>../../secret</code> (without a filename) to see directory listing!
                     </p>
 
                     <div class="mt-3">
@@ -161,6 +203,467 @@ abs_path = os.path.abspath(
 
 return send_file(abs_path)
                         </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SQL Injection Demo Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-database-x"></i> SQL Injection Demo</h3>
+        </div>
+
+        <!-- SQL Vulnerable -->
+        <div class="col-md-6">
+            <div class="card border-danger-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-database-x"></i> Vulnerable SQL</h4>
+                    <code>/sql_login_vuln</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        Login form that uses string concatenation for SQL queries, allowing injection attacks.
+                    </p>
+
+                    <h6>Quick Access</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-danger"
+                           href="/sql_login_vuln"
+                           target="_blank">
+                            <i class="bi bi-door-open"></i> Open Vulnerable Login
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-bug"></i> SQL Injection Payloads</h6>
+                    <p class="small text-muted mb-2">Try these in the email field:</p>
+                    
+                    <div class="mb-2">
+                        <strong>Bypass authentication:</strong>
+                        <code class="d-block bg-dark p-2 small">admin@example.com' OR '1'='1</code>
+                    </div>
+
+                    <div class="mb-2">
+                        <strong>Comment out password:</strong>
+                        <code class="d-block bg-dark p-2 small">admin@example.com'--</code>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="code-title">Vulnerable Code</div>
+                        <pre class="small">
+query = f"SELECT * FROM users 
+WHERE email = '{email}' 
+AND password = '{password}'"
+cursor.execute(query)
+# User input directly in query!
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQL Secure -->
+        <div class="col-md-6">
+            <div class="card border-success-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-database-check"></i> Secure SQL</h4>
+                    <code>/sql_login_secure</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        Login form using parameterized queries to prevent SQL injection.
+                    </p>
+
+                    <h6>Quick Access</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-success"
+                           href="/sql_login_secure"
+                           target="_blank">
+                            <i class="bi bi-shield-check"></i> Open Secure Login
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-key"></i> Valid Credentials</h6>
+                    <ul class="small mb-0">
+                        <li>admin@example.com / admin123</li>
+                        <li>user@example.com / user123</li>
+                        <li>demo@example.com / password123</li>
+                    </ul>
+
+                    <p class="text-muted small mt-2">
+                        SQL injection won't work - parameterized queries treat input as data, not code.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="code-title">Secure Code</div>
+                        <pre class="small">
+# Parameterized query
+cursor.execute(
+    "SELECT * FROM users 
+     WHERE email = ?",
+    (email,)
+)
+# Input is safely escaped
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Injection Demo Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-terminal"></i> Command Injection Demo</h3>
+        </div>
+
+        <!-- Command Vulnerable -->
+        <div class="col-md-6">
+            <div class="card border-danger-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-terminal-x"></i> Vulnerable Command</h4>
+                    <code>/cmd_search_vuln</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        File search using shell commands with unsanitized user input.
+                    </p>
+
+                    <h6>Quick Access</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-danger"
+                           href="/cmd_search_vuln"
+                           target="_blank">
+                            <i class="bi bi-search"></i> Open Vulnerable Search
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-bug"></i> Command Injection Payloads</h6>
+                    
+                    <div class="mb-2">
+                        <strong>Windows - List directory:</strong>
+                        <code class="d-block bg-dark p-2 small">test & dir</code>
+                    </div>
+
+                    <div class="mb-2">
+                        <strong>Windows - Read secret:</strong>
+                        <code class="d-block bg-dark p-2 small">test & type secret\flag.txt</code>
+                    </div>
+
+                    <div class="mb-2">
+                        <strong>Unix - List files:</strong>
+                        <code class="d-block bg-dark p-2 small">test; ls -la</code>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="code-title">Vulnerable Code</div>
+                        <pre class="small">
+cmd = f'dir /s /b *{pattern}*'
+output = subprocess.check_output(
+    cmd, 
+    shell=True  # DANGER!
+)
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Command Secure -->
+        <div class="col-md-6">
+            <div class="card border-success-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-shield-check"></i> Secure Command</h4>
+                    <code>/cmd_search_secure</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        File search using Python's os.walk with input sanitization.
+                    </p>
+
+                    <h6>Quick Access</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-success"
+                           href="/cmd_search_secure"
+                           target="_blank">
+                            <i class="bi bi-shield-check"></i> Open Secure Search
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-info-circle"></i> Protection Methods</h6>
+                    <ul class="small mb-0">
+                        <li>Input sanitization (alphanumeric only)</li>
+                        <li>No shell=True in subprocess</li>
+                        <li>Use Python's os.walk() instead</li>
+                        <li>Limited to public directory</li>
+                    </ul>
+
+                    <p class="text-muted small mt-2">
+                        Command injection payloads are sanitized before use.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="code-title">Secure Code</div>
+                        <pre class="small">
+safe = "".join(
+    c for c in pattern 
+    if c.isalnum() or c in "._-"
+)
+for root, dirs, files in os.walk():
+    # No shell commands!
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSRF Demo Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-shield-x"></i> CSRF (Cross-Site Request Forgery) Demo</h3>
+        </div>
+
+        <!-- CSRF Vulnerable -->
+        <div class="col-md-6">
+            <div class="card border-danger-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-unlock"></i> Vulnerable CSRF</h4>
+                    <code>/change_password_vuln</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        Password change form with no CSRF token protection.
+                    </p>
+
+                    <h6>Quick Access</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-danger"
+                           href="/change_password_vuln"
+                           target="_blank">
+                            <i class="bi bi-key"></i> Open Vulnerable Form
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-bug"></i> CSRF Attack Demo</h6>
+                    <p class="small text-muted mb-2">
+                        While logged in, visit the malicious page:
+                    </p>
+                    
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-danger"
+                           href="/csrf_attack"
+                           target="_blank">
+                            <i class="bi bi-exclamation-triangle"></i> Launch CSRF Attack
+                        </a>
+                    </div>
+
+                    <p class="text-warning small">
+                        The attack page will automatically change your password to "HACKED123"!
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="code-title">Vulnerable Code</div>
+                        <pre class="small">
+@app.route("/change_password")
+def change_password():
+    new_pwd = request.form.get("new_password")
+    # No CSRF token check!
+    update_password(new_pwd)
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSRF Secure -->
+        <div class="col-md-6">
+            <div class="card border-success-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-shield-check"></i> Secure CSRF</h4>
+                    <code>/change_password_secure</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        Password change form with CSRF token validation.
+                    </p>
+
+                    <h6>Quick Access</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-success"
+                           href="/change_password_secure"
+                           target="_blank">
+                            <i class="bi bi-shield-check"></i> Open Secure Form
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-info-circle"></i> CSRF Protection</h6>
+                    <ul class="small mb-0">
+                        <li>Hidden token in form</li>
+                        <li>Token stored in session</li>
+                        <li>Server validates token match</li>
+                        <li>Token changes each request</li>
+                    </ul>
+
+                    <p class="text-muted small mt-2">
+                        The attack page cannot forge the token, so the attack fails.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="code-title">Secure Code</div>
+                        <pre class="small">
+token = request.form.get("csrf_token")
+if token != session.get("csrf_token"):
+    abort(403)
+# Token validated!
+update_password(new_pwd)
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- XSS Demo Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-code-slash"></i> XSS (Cross-Site Scripting) Demo</h3>
+        </div>
+
+        <!-- XSS Vulnerable -->
+        <div class="col-md-6">
+            <div class="card border-danger-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-bug-fill"></i> Vulnerable XSS</h4>
+                    <code>/xss_vuln</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        This page reflects user input directly into HTML without escaping, allowing JavaScript injection.
+                    </p>
+
+                    <h6>Quick Links</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-danger"
+                           href="/xss_vuln?name=John"
+                           target="_blank">
+                            Normal Input
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-bug"></i> Try Cookie Theft</h6>
+                    <form method="get" action="/xss_vuln" target="_blank" class="mb-3">
+                        <div class="input-group input-group-sm">
+                            <input type="text"
+                                   class="form-control font-monospace small"
+                                   name="name"
+                                   value='<img src=x onerror="fetch(\'/steal?cookie=\'+document.cookie)">'>
+                            <button type="submit" class="btn btn-danger">Inject</button>
+                        </div>
+                    </form>
+
+                    <h6><i class="bi bi-bug"></i> Try Alert Popup</h6>
+                    <form method="get" action="/xss_vuln" target="_blank" class="mb-3">
+                        <div class="input-group input-group-sm">
+                            <input type="text"
+                                   class="form-control font-monospace small"
+                                   name="name"
+                                   value='<script>alert("XSS!")</script>'>
+                            <button type="submit" class="btn btn-danger">Inject</button>
+                        </div>
+                    </form>
+
+                    <h6><i class="bi bi-bug"></i> Phishing - Fake Signup Page</h6>
+                    <form method="get" action="/xss_vuln" target="_blank">
+                        <div class="input-group input-group-sm">
+                            <input type="text"
+                                   class="form-control font-monospace small"
+                                   name="name"
+                                   value='<script>window.location="/fake_signup"</script>'>
+                            <button type="submit" class="btn btn-danger">Inject</button>
+                        </div>
+                    </form>
+                    <p class="mt-2 text-muted small">
+                        Redirects to a fake signup page that steals credentials and personal info.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="code-title">Vulnerable Code</div>
+                        <pre>
+name = request.args.get("name")
+html = f"&lt;h1&gt;Welcome, {name}!&lt;/h1&gt;"
+# No escaping - JavaScript executes!
+return html
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- XSS Secure -->
+        <div class="col-md-6">
+            <div class="card border-success-subtle">
+                <div class="card-header">
+                    <h4><i class="bi bi-shield-check"></i> Secure XSS</h4>
+                    <code>/xss_secure</code>
+                </div>
+                <div class="card-body">
+                    <p>
+                        This page uses Jinja2's auto-escaping to prevent JavaScript injection.
+                    </p>
+
+                    <h6>Quick Links</h6>
+                    <div class="mb-2">
+                        <a class="btn btn-sm btn-outline-success"
+                           href="/xss_secure?name=John"
+                           target="_blank">
+                            Normal Input
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6><i class="bi bi-send-slash"></i> Try Injection (it will fail)</h6>
+                    <form method="get" action="/xss_secure" target="_blank" class="mb-3">
+                        <div class="input-group input-group-sm">
+                            <input type="text"
+                                   class="form-control font-monospace small"
+                                   name="name"
+                                   value='<script>alert("XSS!")</script>'>
+                            <button type="submit" class="btn btn-success">Attempt</button>
+                        </div>
+                    </form>
+
+                    <p class="text-muted small">
+                        The injected script will be displayed as plain text instead of executing.
+                    </p>
+
+                    <div class="mt-3">
+                        <div class="code-title">Secure Code</div>
+                        <pre>
+# Use Jinja2 template with auto-escaping
+name = escape(request.args.get("name"))
+return render_template(
+    "xss_secure.html",
+    name=name
+)
+# &lt;script&gt; becomes &amp;lt;script&amp;gt;
+</pre>
                     </div>
                 </div>
             </div>
