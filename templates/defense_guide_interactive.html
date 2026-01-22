@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Defense Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    
+    <style>
+        .defense-section {
+            border-left: 4px solid;
+            margin-bottom: 30px;
+            border-radius: 0 15px 15px 0;
+            transition: all 0.3s ease;
+        }
+        .defense-section.completed {
+            opacity: 0.7;
+        }
+        .defense-section.completed::after {
+            content: '✓ Learned';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+        .code-sandbox {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+        }
+        .sandbox-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+        .sandbox-tabs {
+            display: flex;
+            gap: 10px;
+        }
+        .sandbox-tab {
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: #21262d;
+            color: #8b949e;
+        }
+        .sandbox-tab.active {
+            background: #238636;
+            color: white;
+        }
+        .sandbox-tab.vulnerable {
+            background: #da3633;
+            color: white;
+        }
+        .code-editor {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            min-height: 150px;
+            color: #c9d1d9;
+            resize: vertical;
+        }
+        .output-panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            min-height: 80px;
+        }
+        .run-btn {
+            background: linear-gradient(135deg, #238636, #2ea043);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .run-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
+        }
+        .challenge-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px dashed #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .challenge-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .challenge-status {
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .progress-tracker {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        .topic-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 0;
+        }
+        .topic-check input {
+            width: 18px;
+            height: 18px;
+        }
+        .interactive-demo {
+            background: #21262d;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .attack-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .attack-input input {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            color: #c9d1d9;
+            font-family: monospace;
+        }
+        .result-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .result-vulnerable {
+            background: rgba(218, 54, 51, 0.2);
+            border: 1px solid #da3633;
+        }
+        .result-secure {
+            background: rgba(35, 134, 54, 0.2);
+            border: 1px solid #238636;
+        }
+        .comparison-slider {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #ffc107;
+            cursor: ew-resize;
+            z-index: 10;
+        }
+        .slider-handle::before {
+            content: '⟷';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffc107;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .hint-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            display: none;
+        }
+        .hint-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .xp-bar {
+            height: 8px;
+            background: #21262d;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #238636, #2ea043);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/"><i class="bi bi-shield-lock"></i> Web Security Demo</a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success fs-6">
+                <i class="bi bi-shield-check"></i> Interactive Defense Guide
+            </span>
+            <span class="badge bg-warning text-dark" id="xpBadge">0 XP</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="text-center mb-4">
+        <h2><i class="bi bi-controller text-info"></i> Interactive Defense Training</h2>
+        <p class="text-muted">Learn by doing - try attacks, then implement defenses</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills justify-content-center mb-4" id="defenseNav">
+        <li class="nav-item">
+            <button class="nav-link active" data-section="sql">
+                <i class="bi bi-database"></i> SQL Injection
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-section="xss">
+                <i class="bi bi-code-slash"></i> XSS
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-section="csrf">
+                <i class="bi bi-arrow-repeat"></i> CSRF
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-section="cmd">
+                <i class="bi bi-terminal"></i> Command Injection
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-section="path">
+                <i class="bi bi-folder2-open"></i> Path Traversal
+            </button>
+        </li>
+    </ul>
+
+    <!-- SQL Injection Section -->
+    <section id="section-sql" class="defense-section border-danger p-4 position-relative">
+        <h3><i class="bi bi-database text-danger"></i> SQL Injection</h3>
+        <span class="badge bg-dark mb-3">OWASP A03:2021</span>
+        
+        <!-- Interactive Demo -->
+        <div class="interactive-demo">
+            <h5><i class="bi bi-play-circle"></i> Try It: SQL Injection Attack</h5>
+            <p class="text-muted small">Enter a malicious payload to bypass the login</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-danger"><i class="bi bi-unlock"></i> Vulnerable System</h6>
+                    <div class="attack-input">
+                        <input type="text" id="sql-email" placeholder="Email">
+                    </div>
+                    <div class="attack-input">
+                        <input type="text" id="sql-password" placeholder="Password">
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="testSQLInjection()">
+                        <i class="bi bi-lightning"></i> Test Attack
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="showHint('sql-hint')">
+                        <i class="bi bi-lightbulb"></i> Hint
+                    </button>
+                    
+                    <div id="sql-hint" class="hint-box">
+                        <strong>Hint:</strong> Try: <code>' OR '1'='1' --</code> in the email field
+                    </div>
+                    
+                    <div id="sql-query-display" class="output-panel mt-2">
+                        <small class="text-muted">Query will appear here...</small>
+                    </div>
+                    <div id="sql-result" class="result-box mt-2" style="display:none;"></div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-lock"></i> Secure System</h6>
+                    <div class="attack-input">
+                        <input type="text" id="sql-email-secure" placeholder="Email">
+                    </div>
+                    <div class="attack-input">
+                        <input type="text" id="sql-password-secure" placeholder="Password">
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="testSQLSecure()">
+                        <i class="bi bi-shield"></i> Test Defense
+                    </button>
+                    
+                    <div id="sql-query-secure-display" class="output-panel mt-2">
+                        <small class="text-muted">Query will appear here...</small>
+                    </div>
+                    <div id="sql-result-secure" class="result-box mt-2" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Challenge -->
+        <div class="challenge-box">
+            <div class="challenge-header">
+                <i class="bi bi-trophy text-warning" style="font-size: 1.5rem;"></i>
+                <h5 class="mb-0">Challenge: Fix the Vulnerable Code</h5>
+                <span class="challenge-status bg-secondary" id="sql-challenge-status">Not Started</span>
+            </div>
+            <p>Convert this vulnerable code to use parameterized queries:</p>
+            
+            <textarea id="sql-challenge-code" class="code-editor"># Fix this vulnerable code:
+query = f"SELECT * FROM users WHERE email = '{email}'"
+cursor.execute(query)</textarea>
+            
+            <div class="mt-3">
+                <button class="run-btn" onclick="checkSQLChallenge()">
+                    <i class="bi bi-check-circle"></i> Check Solution
+                </button>
+                <button class="btn btn-outline-info btn-sm ms-2" onclick="showSolution('sql')">
+                    <i class="bi bi-eye"></i> Show Solution
+                </button>
+            </div>
+            
+            <div id="sql-challenge-result" class="mt-3"></div>
+            <div id="sql-solution" class="hint-box">
+                <strong>Solution:</strong>
+                <pre class="mb-0"><code># Parameterized query:
+cursor.execute("SELECT * FROM users WHERE email = ?", (email,))</code></pre>
+            </div>
+        </div>
+        
+        <button class="btn btn-outline-success btn-sm mt-3" onclick="markLearned('sql')">
+            <i class="bi bi-check2-circle"></i> Mark as Learned (+50 XP)
+        </button>
+    </section>
+
+    <!-- XSS Section -->
+    <section id="section-xss" class="defense-section border-info p-4 position-relative" style="display:none;">
+        <h3><i class="bi bi-code-slash text-info"></i> Cross-Site Scripting (XSS)</h3>
+        <span class="badge bg-dark mb-3">OWASP A03:2021</span>
+        
+        <div class="interactive-demo">
+            <h5><i class="bi bi-play-circle"></i> Try It: XSS Attack</h5>
+            <p class="text-muted small">Inject JavaScript code that will execute in the browser</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-danger"><i class="bi bi-unlock"></i> Vulnerable Page</h6>
+                    <div class="attack-input">
+                        <input type="text" id="xss-input" placeholder="Enter your name">
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="testXSS()">
+                        <i class="bi bi-lightning"></i> Inject
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="showHint('xss-hint')">
+                        <i class="bi bi-lightbulb"></i> Hint
+                    </button>
+                    
+                    <div id="xss-hint" class="hint-box">
+                        <strong>Hint:</strong> Try: <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
+                    </div>
+                    
+                    <div class="output-panel mt-2">
+                        <small class="text-muted">Output:</small>
+                        <div id="xss-output">Welcome, Guest!</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-lock"></i> Secure Page</h6>
+                    <div class="attack-input">
+                        <input type="text" id="xss-input-secure" placeholder="Enter your name">
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="testXSSSecure()">
+                        <i class="bi bi-shield"></i> Test Defense
+                    </button>
+                    
+                    <div class="output-panel mt-2">
+                        <small class="text-muted">Output (escaped):</small>
+                        <div id="xss-output-secure">Welcome, Guest!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="challenge-box">
+            <div class="challenge-header">
+                <i class="bi bi-trophy text-warning" style="font-size: 1.5rem;"></i>
+                <h5 class="mb-0">Challenge: Implement HTML Escaping</h5>
+                <span class="challenge-status bg-secondary" id="xss-challenge-status">Not Started</span>
+            </div>
+            <p>Write a function that escapes HTML special characters:</p>
+            
+            <textarea id="xss-challenge-code" class="code-editor">def escape_html(text):
+    # Replace < > " ' & with HTML entities
+    # Your code here:
+    return text</textarea>
+            
+            <div class="mt-3">
+                <button class="run-btn" onclick="checkXSSChallenge()">
+                    <i class="bi bi-check-circle"></i> Check Solution
+                </button>
+                <button class="btn btn-outline-info btn-sm ms-2" onclick="showSolution('xss')">
+                    <i class="bi bi-eye"></i> Show Solution
+                </button>
+            </div>
+            
+            <div id="xss-challenge-result" class="mt-3"></div>
+            <div id="xss-solution" class="hint-box">
+                <strong>Solution:</strong>
+                <pre class="mb-0"><code>def escape_html(text):
+    return (text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;"))</code></pre>
+            </div>
+        </div>
+        
+        <button class="btn btn-outline-success btn-sm mt-3" onclick="markLearned('xss')">
+            <i class="bi bi-check2-circle"></i> Mark as Learned (+50 XP)
+        </button>
+    </section>
+
+    <!-- CSRF Section -->
+    <section id="section-csrf" class="defense-section border-warning p-4 position-relative" style="display:none;">
+        <h3><i class="bi bi-arrow-repeat text-warning"></i> Cross-Site Request Forgery (CSRF)</h3>
+        <span class="badge bg-dark mb-3">OWASP A01:2021</span>
+        
+        <div class="interactive-demo">
+            <h5><i class="bi bi-play-circle"></i> Try It: CSRF Attack Simulation</h5>
+            <p class="text-muted small">See how a malicious page can submit forms on your behalf</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-danger"><i class="bi bi-unlock"></i> Without CSRF Token</h6>
+                    <p class="small">This form has no protection. An attacker's page could submit it:</p>
+                    <div class="code-sandbox">
+                        <code>&lt;form action="/change_password" method="POST"&gt;<br>
+                        &nbsp;&nbsp;&lt;input name="password" value="hacked123"&gt;<br>
+                        &lt;/form&gt;<br>
+                        &lt;script&gt;document.forms[0].submit()&lt;/script&gt;</code>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="simulateCSRF()">
+                        <i class="bi bi-lightning"></i> Simulate Attack
+                    </button>
+                    <div id="csrf-result" class="result-box result-vulnerable mt-2" style="display:none;">
+                        <i class="bi bi-exclamation-triangle"></i> Password changed to "hacked123"!
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-lock"></i> With CSRF Token</h6>
+                    <p class="small">Token must match server's session token:</p>
+                    <div class="code-sandbox">
+                        <code>&lt;form action="/change_password" method="POST"&gt;<br>
+                        &nbsp;&nbsp;&lt;input type="hidden" name="csrf_token"<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;value="<span class="text-warning">a7f3b9...</span>"&gt;<br>
+                        &nbsp;&nbsp;&lt;input name="password"&gt;<br>
+                        &lt;/form&gt;</code>
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="simulateCSRFSecure()">
+                        <i class="bi bi-shield"></i> Try Attack
+                    </button>
+                    <div id="csrf-result-secure" class="result-box result-secure mt-2" style="display:none;">
+                        <i class="bi bi-shield-check"></i> CSRF token validation failed! Attack blocked.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="challenge-box">
+            <div class="challenge-header">
+                <i class="bi bi-trophy text-warning" style="font-size: 1.5rem;"></i>
+                <h5 class="mb-0">Challenge: Implement CSRF Protection</h5>
+                <span class="challenge-status bg-secondary" id="csrf-challenge-status">Not Started</span>
+            </div>
+            <p>Add CSRF token validation to this route:</p>
+            
+            <textarea id="csrf-challenge-code" class="code-editor">@app.route("/transfer", methods=["POST"])
+def transfer_money():
+    amount = request.form.get("amount")
+    # Add CSRF validation here:
+    
+    # Process transfer...
+    return "Transfer complete"</textarea>
+            
+            <div class="mt-3">
+                <button class="run-btn" onclick="checkCSRFChallenge()">
+                    <i class="bi bi-check-circle"></i> Check Solution
+                </button>
+                <button class="btn btn-outline-info btn-sm ms-2" onclick="showSolution('csrf')">
+                    <i class="bi bi-eye"></i> Show Solution
+                </button>
+            </div>
+            
+            <div id="csrf-challenge-result" class="mt-3"></div>
+            <div id="csrf-solution" class="hint-box">
+                <strong>Solution:</strong>
+                <pre class="mb-0"><code>@app.route("/transfer", methods=["POST"])
+def transfer_money():
+    token = request.form.get("csrf_token")
+    if not token or token != session.get("csrf_token"):
+        abort(403)  # Reject invalid token
+    
+    amount = request.form.get("amount")
+    # Process transfer...
+    return "Transfer complete"</code></pre>
+            </div>
+        </div>
+        
+        <button class="btn btn-outline-success btn-sm mt-3" onclick="markLearned('csrf')">
+            <i class="bi bi-check2-circle"></i> Mark as Learned (+50 XP)
+        </button>
+    </section>
+
+    <!-- Command Injection Section -->
+    <section id="section-cmd" class="defense-section border-success p-4 position-relative" style="display:none;">
+        <h3><i class="bi bi-terminal text-success"></i> Command Injection</h3>
+        <span class="badge bg-dark mb-3">OWASP A03:2021</span>
+        
+        <div class="interactive-demo">
+            <h5><i class="bi bi-play-circle"></i> Try It: Command Injection</h5>
+            <p class="text-muted small">Inject additional commands into the ping utility</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-danger"><i class="bi bi-unlock"></i> Vulnerable (shell=True)</h6>
+                    <div class="attack-input">
+                        <input type="text" id="cmd-input" placeholder="Host to ping">
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="testCmdInjection()">
+                        <i class="bi bi-lightning"></i> Run
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="showHint('cmd-hint')">
+                        <i class="bi bi-lightbulb"></i> Hint
+                    </button>
+                    
+                    <div id="cmd-hint" class="hint-box">
+                        <strong>Hint:</strong> Try: <code>127.0.0.1 & whoami</code> or <code>127.0.0.1; cat /etc/passwd</code>
+                    </div>
+                    
+                    <div id="cmd-command-display" class="output-panel mt-2">
+                        <small class="text-muted">Command: </small><code id="cmd-executed"></code>
+                    </div>
+                    <div id="cmd-result" class="result-box mt-2" style="display:none;"></div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-lock"></i> Secure (sanitized)</h6>
+                    <div class="attack-input">
+                        <input type="text" id="cmd-input-secure" placeholder="Host to ping">
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="testCmdSecure()">
+                        <i class="bi bi-shield"></i> Run
+                    </button>
+                    
+                    <div id="cmd-command-secure-display" class="output-panel mt-2">
+                        <small class="text-muted">Sanitized input: </small><code id="cmd-sanitized"></code>
+                    </div>
+                    <div id="cmd-result-secure" class="result-box mt-2" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="challenge-box">
+            <div class="challenge-header">
+                <i class="bi bi-trophy text-warning" style="font-size: 1.5rem;"></i>
+                <h5 class="mb-0">Challenge: Sanitize User Input</h5>
+                <span class="challenge-status bg-secondary" id="cmd-challenge-status">Not Started</span>
+            </div>
+            <p>Write a function that only allows safe characters in filenames:</p>
+            
+            <textarea id="cmd-challenge-code" class="code-editor">def sanitize_filename(filename):
+    # Only allow alphanumeric, dots, underscores, hyphens
+    # Your code here:
+    return filename</textarea>
+            
+            <div class="mt-3">
+                <button class="run-btn" onclick="checkCmdChallenge()">
+                    <i class="bi bi-check-circle"></i> Check Solution
+                </button>
+                <button class="btn btn-outline-info btn-sm ms-2" onclick="showSolution('cmd')">
+                    <i class="bi bi-eye"></i> Show Solution
+                </button>
+            </div>
+            
+            <div id="cmd-challenge-result" class="mt-3"></div>
+            <div id="cmd-solution" class="hint-box">
+                <strong>Solution:</strong>
+                <pre class="mb-0"><code>def sanitize_filename(filename):
+    safe = ""
+    for c in filename:
+        if c.isalnum() or c in "._-":
+            safe += c
+    return safe
+# Or: return "".join(c for c in filename if c.isalnum() or c in "._-")</code></pre>
+            </div>
+        </div>
+        
+        <button class="btn btn-outline-success btn-sm mt-3" onclick="markLearned('cmd')">
+            <i class="bi bi-check2-circle"></i> Mark as Learned (+50 XP)
+        </button>
+    </section>
+
+    <!-- Path Traversal Section -->
+    <section id="section-path" class="defense-section p-4 position-relative" style="display:none; border-color: #9b59b6 !important;">
+        <h3><i class="bi bi-folder2-open" style="color: #9b59b6;"></i> Path Traversal</h3>
+        <span class="badge bg-dark mb-3">OWASP A01:2021</span>
+        
+        <div class="interactive-demo">
+            <h5><i class="bi bi-play-circle"></i> Try It: Path Traversal Attack</h5>
+            <p class="text-muted small">Escape the intended directory to access sensitive files</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-danger"><i class="bi bi-unlock"></i> Vulnerable File Access</h6>
+                    <div class="attack-input">
+                        <input type="text" id="path-input" placeholder="Filename">
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="testPathTraversal()">
+                        <i class="bi bi-lightning"></i> Access File
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="showHint('path-hint')">
+                        <i class="bi bi-lightbulb"></i> Hint
+                    </button>
+                    
+                    <div id="path-hint" class="hint-box">
+                        <strong>Hint:</strong> Try: <code>../../../etc/passwd</code> or <code>..\..\secret\flag.txt</code>
+                    </div>
+                    
+                    <div id="path-resolved" class="output-panel mt-2">
+                        <small class="text-muted">Resolved path: </small><code id="path-full"></code>
+                    </div>
+                    <div id="path-result" class="result-box mt-2" style="display:none;"></div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-success"><i class="bi bi-lock"></i> Secure File Access</h6>
+                    <div class="attack-input">
+                        <input type="text" id="path-input-secure" placeholder="Filename">
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="testPathSecure()">
+                        <i class="bi bi-shield"></i> Access File
+                    </button>
+                    
+                    <div id="path-resolved-secure" class="output-panel mt-2">
+                        <small class="text-muted">Sanitized: </small><code id="path-sanitized"></code>
+                    </div>
+                    <div id="path-result-secure" class="result-box mt-2" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="challenge-box">
+            <div class="challenge-header">
+                <i class="bi bi-trophy text-warning" style="font-size: 1.5rem;"></i>
+                <h5 class="mb-0">Challenge: Validate File Path</h5>
+                <span class="challenge-status bg-secondary" id="path-challenge-status">Not Started</span>
+            </div>
+            <p>Write a function that ensures the path stays within the allowed directory:</p>
+            
+            <textarea id="path-challenge-code" class="code-editor">import os
+
+def safe_file_path(filename, base_dir):
+    # 1. Join base_dir and filename
+    # 2. Get absolute path
+    # 3. Check it starts with base_dir
+    # Return the path or raise error
+    pass</textarea>
+            
+            <div class="mt-3">
+                <button class="run-btn" onclick="checkPathChallenge()">
+                    <i class="bi bi-check-circle"></i> Check Solution
+                </button>
+                <button class="btn btn-outline-info btn-sm ms-2" onclick="showSolution('path')">
+                    <i class="bi bi-eye"></i> Show Solution
+                </button>
+            </div>
+            
+            <div id="path-challenge-result" class="mt-3"></div>
+            <div id="path-solution" class="hint-box">
+                <strong>Solution:</strong>
+                <pre class="mb-0"><code>def safe_file_path(filename, base_dir):
+    from werkzeug.utils import secure_filename
+    safe_name = secure_filename(filename)
+    full_path = os.path.join(base_dir, safe_name)
+    abs_path = os.path.abspath(full_path)
+    
+    if not abs_path.startswith(os.path.abspath(base_dir) + os.sep):
+        raise ValueError("Path traversal detected!")
+    
+    return abs_path</code></pre>
+            </div>
+        </div>
+        
+        <button class="btn btn-outline-success btn-sm mt-3" onclick="markLearned('path')">
+            <i class="bi bi-check2-circle"></i> Mark as Learned (+50 XP)
+        </button>
+    </section>
+
+    <!-- Progress Tracker -->
+    <div class="progress-tracker">
+        <h6><i class="bi bi-bar-chart-fill text-info"></i> Your Progress</h6>
+        <div class="topic-check">
+            <input type="checkbox" id="check-sql" disabled>
+            <label for="check-sql">SQL Injection</label>
+        </div>
+        <div class="topic-check">
+            <input type="checkbox" id="check-xss" disabled>
+            <label for="check-xss">XSS</label>
+        </div>
+        <div class="topic-check">
+            <input type="checkbox" id="check-csrf" disabled>
+            <label for="check-csrf">CSRF</label>
+        </div>
+        <div class="topic-check">
+            <input type="checkbox" id="check-cmd" disabled>
+            <label for="check-cmd">Command Injection</label>
+        </div>
+        <div class="topic-check">
+            <input type="checkbox" id="check-path" disabled>
+            <label for="check-path">Path Traversal</label>
+        </div>
+        <div class="xp-bar">
+            <div class="xp-fill" id="xpBar" style="width: 0%;"></div>
+        </div>
+        <small class="text-muted" id="xpText">0/250 XP</small>
+    </div>
+
+    <div class="text-center my-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+        <a href="/quiz" class="btn btn-outline-info">
+            <i class="bi bi-question-circle"></i> Take Quiz
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+hljs.highlightAll();
+
+let xp = parseInt(localStorage.getItem('defense_xp') || '0');
+let learned = JSON.parse(localStorage.getItem('defense_learned') || '[]');
+
+// Update XP display
+function updateXP() {
+    document.getElementById('xpBadge').textContent = xp + ' XP';
+    document.getElementById('xpText').textContent = xp + '/250 XP';
+    document.getElementById('xpBar').style.width = (xp / 250 * 100) + '%';
+    localStorage.setItem('defense_xp', xp);
+    localStorage.setItem('defense_learned', JSON.stringify(learned));
+    
+    // Update checkboxes
+    learned.forEach(topic => {
+        document.getElementById('check-' + topic).checked = true;
+    });
+}
+updateXP();
+
+// Navigation
+document.querySelectorAll('#defenseNav .nav-link').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('#defenseNav .nav-link').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        document.querySelectorAll('.defense-section').forEach(s => s.style.display = 'none');
+        document.getElementById('section-' + this.dataset.section).style.display = 'block';
+    });
+});
+
+// Hint toggle
+function showHint(id) {
+    document.getElementById(id).classList.toggle('show');
+}
+
+// Solution toggle
+function showSolution(topic) {
+    document.getElementById(topic + '-solution').classList.toggle('show');
+}
+
+// Mark as learned
+function markLearned(topic) {
+    if (!learned.includes(topic)) {
+        learned.push(topic);
+        xp += 50;
+        updateXP();
+        
+        const section = document.getElementById('section-' + topic);
+        section.classList.add('completed');
+        
+        // Show celebration
+        const badge = document.createElement('div');
+        badge.className = 'alert alert-success';
+        badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> +50 XP! Topic marked as learned.';
+        section.prepend(badge);
+        setTimeout(() => badge.remove(), 3000);
+    }
+}
+
+// SQL Injection Demo
+function testSQLInjection() {
+    const email = document.getElementById('sql-email').value;
+    const password = document.getElementById('sql-password').value;
+    
+    const query = `SELECT * FROM users WHERE email = '${email}' AND password = '${password}'`;
+    document.getElementById('sql-query-display').innerHTML = 
+        `<small class="text-muted">Query:</small><br><code class="text-danger">${escapeHtml(query)}</code>`;
+    
+    const result = document.getElementById('sql-result');
+    result.style.display = 'block';
+    
+    if (email.includes("' OR ") || email.includes("'--") || email.includes("' or ")) {
+        result.className = 'result-box result-vulnerable';
+        result.innerHTML = '<i class="bi bi-unlock-fill text-danger"></i> <strong>ACCESS GRANTED!</strong> SQL Injection successful. You bypassed authentication!';
+    } else {
+        result.className = 'result-box result-secure';
+        result.innerHTML = '<i class="bi bi-x-circle"></i> Access denied. Try injecting SQL!';
+    }
+}
+
+function testSQLSecure() {
+    const email = document.getElementById('sql-email-secure').value;
+    const password = document.getElementById('sql-password-secure').value;
+    
+    document.getElementById('sql-query-secure-display').innerHTML = 
+        `<small class="text-muted">Query:</small><br><code class="text-success">cursor.execute("SELECT * FROM users WHERE email = ? AND password = ?", ("${escapeHtml(email)}", "***"))</code>`;
+    
+    const result = document.getElementById('sql-result-secure');
+    result.style.display = 'block';
+    result.className = 'result-box result-secure';
+    result.innerHTML = '<i class="bi bi-shield-check text-success"></i> Parameterized query used. Input is treated as DATA, not code. Injection attempt neutralized!';
+}
+
+// XSS Demo
+function testXSS() {
+    const input = document.getElementById('xss-input').value || 'Guest';
+    document.getElementById('xss-output').innerHTML = 'Welcome, ' + input + '!';
+}
+
+function testXSSSecure() {
+    const input = document.getElementById('xss-input-secure').value || 'Guest';
+    document.getElementById('xss-output-secure').textContent = 'Welcome, ' + input + '!';
+}
+
+// CSRF Demo
+function simulateCSRF() {
+    const result = document.getElementById('csrf-result');
+    result.style.display = 'block';
+}
+
+function simulateCSRFSecure() {
+    const result = document.getElementById('csrf-result-secure');
+    result.style.display = 'block';
+}
+
+// Command Injection Demo
+function testCmdInjection() {
+    const input = document.getElementById('cmd-input').value;
+    const cmd = `ping ${input}`;
+    document.getElementById('cmd-executed').textContent = cmd;
+    
+    const result = document.getElementById('cmd-result');
+    result.style.display = 'block';
+    
+    if (input.includes('&') || input.includes(';') || input.includes('|') || input.includes('`')) {
+        result.className = 'result-box result-vulnerable';
+        result.innerHTML = '<i class="bi bi-exclamation-triangle text-danger"></i> <strong>COMMAND INJECTION!</strong> Additional command would execute on the server!';
+    } else {
+        result.className = 'result-box result-secure';
+        result.innerHTML = '<i class="bi bi-check-circle"></i> No injection detected. Try using ; or & to chain commands!';
+    }
+}
+
+function testCmdSecure() {
+    const input = document.getElementById('cmd-input-secure').value;
+    const sanitized = input.replace(/[^a-zA-Z0-9.\-_]/g, '');
+    document.getElementById('cmd-sanitized').textContent = sanitized;
+    
+    const result = document.getElementById('cmd-result-secure');
+    result.style.display = 'block';
+    result.className = 'result-box result-secure';
+    result.innerHTML = '<i class="bi bi-shield-check text-success"></i> Input sanitized! Special characters removed. Command injection prevented.';
+}
+
+// Path Traversal Demo
+function testPathTraversal() {
+    const input = document.getElementById('path-input').value;
+    const basePath = '/var/www/public/files/';
+    const fullPath = basePath + input;
+    document.getElementById('path-full').textContent = fullPath;
+    
+    const result = document.getElementById('path-result');
+    result.style.display = 'block';
+    
+    if (input.includes('../') || input.includes('..\\')) {
+        result.className = 'result-box result-vulnerable';
+        result.innerHTML = '<i class="bi bi-folder-fill text-danger"></i> <strong>PATH TRAVERSAL!</strong> You escaped the public directory and could access: ' + escapeHtml(fullPath);
+    } else {
+        result.className = 'result-box result-secure';
+        result.innerHTML = '<i class="bi bi-folder"></i> Accessing file in public directory. Try using ../ to escape!';
+    }
+}
+
+function testPathSecure() {
+    const input = document.getElementById('path-input-secure').value;
+    // Simulate secure_filename behavior
+    const sanitized = input.replace(/[^a-zA-Z0-9.\-_]/g, '_').replace(/^\.+/, '');
+    document.getElementById('path-sanitized').textContent = sanitized || '(empty after sanitization)';
+    
+    const result = document.getElementById('path-result-secure');
+    result.style.display = 'block';
+    result.className = 'result-box result-secure';
+    result.innerHTML = '<i class="bi bi-shield-check text-success"></i> Filename sanitized and path validated! Traversal characters removed.';
+}
+
+// Challenge checks
+function checkSQLChallenge() {
+    const code = document.getElementById('sql-challenge-code').value.toLowerCase();
+    const result = document.getElementById('sql-challenge-result');
+    
+    if ((code.includes('execute') && code.includes('?')) || 
+        (code.includes('execute') && code.includes(':email'))) {
+        result.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Correct! You used parameterized queries.</div>';
+        document.getElementById('sql-challenge-status').textContent = 'Completed';
+        document.getElementById('sql-challenge-status').className = 'challenge-status bg-success';
+    } else {
+        result.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Not quite. Make sure to use ? or :param placeholders instead of f-strings.</div>';
+    }
+}
+
+function checkXSSChallenge() {
+    const code = document.getElementById('xss-challenge-code').value;
+    const result = document.getElementById('xss-challenge-result');
+    
+    if (code.includes('&lt;') || code.includes('&amp;') || code.includes('.replace')) {
+        result.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Correct! You implemented HTML escaping.</div>';
+        document.getElementById('xss-challenge-status').textContent = 'Completed';
+        document.getElementById('xss-challenge-status').className = 'challenge-status bg-success';
+    } else {
+        result.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Remember to replace < > & " \' with HTML entities.</div>';
+    }
+}
+
+function checkCSRFChallenge() {
+    const code = document.getElementById('csrf-challenge-code').value.toLowerCase();
+    const result = document.getElementById('csrf-challenge-result');
+    
+    if (code.includes('csrf_token') && (code.includes('session') || code.includes('abort'))) {
+        result.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Correct! You added CSRF token validation.</div>';
+        document.getElementById('csrf-challenge-status').textContent = 'Completed';
+        document.getElementById('csrf-challenge-status').className = 'challenge-status bg-success';
+    } else {
+        result.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Check for csrf_token in form and compare to session token.</div>';
+    }
+}
+
+function checkCmdChallenge() {
+    const code = document.getElementById('cmd-challenge-code').value.toLowerCase();
+    const result = document.getElementById('cmd-challenge-result');
+    
+    if (code.includes('isalnum') || code.includes('for c in') || code.includes('._-')) {
+        result.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Correct! You implemented input sanitization.</div>';
+        document.getElementById('cmd-challenge-status').textContent = 'Completed';
+        document.getElementById('cmd-challenge-status').className = 'challenge-status bg-success';
+    } else {
+        result.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Filter to only allow alphanumeric and safe characters.</div>';
+    }
+}
+
+function checkPathChallenge() {
+    const code = document.getElementById('path-challenge-code').value.toLowerCase();
+    const result = document.getElementById('path-challenge-result');
+    
+    if (code.includes('abspath') && code.includes('startswith')) {
+        result.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Correct! You validated the resolved path stays in the allowed directory.</div>';
+        document.getElementById('path-challenge-status').textContent = 'Completed';
+        document.getElementById('path-challenge-status').className = 'challenge-status bg-success';
+    } else {
+        result.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Use os.path.abspath() and check the path startswith the base directory.</div>';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+</body>
+</html>

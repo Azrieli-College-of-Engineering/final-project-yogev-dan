@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Stage 3: Stealing the Secret - Path Traversal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .story-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 10px 10px 0;
+        }
+        .story-narrator {
+            color: #ffc107;
+            font-style: italic;
+        }
+        .hint-revealer {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border: 1px dashed #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .hint-level {
+            display: none;
+            padding: 10px;
+            margin-top: 10px;
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid #ffc107;
+            border-radius: 0 5px 5px 0;
+        }
+        .hint-level.revealed {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .answer-reveal {
+            display: none;
+            padding: 15px;
+            margin-top: 10px;
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+        }
+        .answer-reveal.revealed {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hint-btn { margin: 2px; }
+        .stage-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .stage-indicator {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .stage-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .stage-dot.active {
+            background: #ffc107;
+            color: #000;
+        }
+        .stage-dot.completed {
+            background: #28a745;
+            color: #fff;
+        }
+        .stage-dot.pending {
+            background: #343a40;
+            color: #6c757d;
+            border: 2px solid #6c757d;
+        }
+        .success-banner {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            animation: celebrate 0.5s ease;
+        }
+        @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .file-content {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .flag-reveal {
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/"><i class="bi bi-shield-lock"></i> Web Security Demo</a>
+        <span class="badge bg-warning text-dark fs-6">
+            <i class="bi bi-folder2-open"></i> The Database Heist - Stage 3
+        </span>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Stage Navigation -->
+    <div class="stage-nav">
+        <a href="/attack_chain_1/stage2" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Previous Stage
+        </a>
+        <div class="stage-indicator">
+            <a href="/attack_chain_1/stage1" class="stage-dot completed text-decoration-none">1</a>
+            <i class="bi bi-arrow-right text-success"></i>
+            <a href="/attack_chain_1/stage2" class="stage-dot completed text-decoration-none">2</a>
+            <i class="bi bi-arrow-right text-success"></i>
+            <div class="stage-dot active">3</div>
+        </div>
+        <a href="/attack_chain_1" class="btn btn-outline-success">
+            <i class="bi bi-flag-fill"></i> Complete Chain
+        </a>
+    </div>
+
+    <!-- Stage Header -->
+    <div class="text-center mb-4">
+        <h1><i class="bi bi-3-circle-fill text-warning"></i> Stealing the Secret</h1>
+        <p class="lead text-muted">Path Traversal Attack</p>
+    </div>
+
+    <!-- Story Box -->
+    <div class="story-box">
+        <h4><i class="bi bi-folder2-open"></i> The Mission</h4>
+        <p class="story-narrator">
+            "You've discovered a 'secret' directory on the server! Now you need to read the files inside. 
+            The file viewer is supposed to only show files from the 'public' folder, but the developers 
+            didn't properly validate the file path. Using directory traversal sequences, you can escape 
+            the public folder and access files anywhere on the server..."
+        </p>
+    </div>
+
+    {% if path_result and 'FLAG' in path_result|upper %}
+    <div class="flag-reveal mb-4">
+        <h2><i class="bi bi-trophy-fill"></i> MISSION COMPLETE!</h2>
+        <p class="mb-0">You've successfully completed the entire attack chain!</p>
+        <div class="mt-3 p-3 bg-dark text-warning rounded">
+            <code>{{ path_result }}</code>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Vulnerable Side -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-danger h-100">
+                <div class="card-header bg-danger text-white">
+                    <strong><i class="bi bi-folder2-open"></i> Vulnerable File Viewer</strong>
+                    <span class="badge bg-dark float-end">No path validation</span>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        <i class="bi bi-code-slash"></i> Backend: 
+                        <code>open("public/files/" + user_input)</code>
+                    </p>
+                    
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">File Path:</label>
+                            <input type="text" class="form-control font-monospace" 
+                                   name="path_file" value="{{ path_file or '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-file-earmark-text"></i> Read File
+                        </button>
+                    </form>
+                    
+                    {% if path_result %}
+                    <div class="file-content mt-3">
+                        <pre class="mb-0 {{ 'text-warning' if 'FLAG' in path_result|upper else 'text-success' }}"><code>{{ path_result }}</code></pre>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Progressive Hints System -->
+                    <div class="hint-revealer">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <strong><i class="bi bi-puzzle"></i> Need Help?</strong>
+                            <div>
+                                <button class="btn btn-sm btn-outline-warning hint-btn" onclick="revealHint(1)">Hint 1</button>
+                                <button class="btn btn-sm btn-outline-warning hint-btn" onclick="revealHint(2)">Hint 2</button>
+                                <button class="btn btn-sm btn-outline-warning hint-btn" onclick="revealHint(3)">Hint 3</button>
+                                <button class="btn btn-sm btn-outline-danger hint-btn" onclick="revealAnswer()">🚨 Reveal Answer</button>
+                            </div>
+                        </div>
+                        <div id="hint-1" class="hint-level">
+                            <i class="bi bi-lightbulb text-warning"></i> <strong>Hint 1:</strong> 
+                            The file viewer starts from <code>public/files/</code>. How do you navigate UP directories in a file path?
+                        </div>
+                        <div id="hint-2" class="hint-level">
+                            <i class="bi bi-lightbulb text-warning"></i> <strong>Hint 2:</strong> 
+                            <code>..</code> means "go up one directory". From <code>public/files/</code>, you need to go up twice to reach the project root.
+                        </div>
+                        <div id="hint-3" class="hint-level">
+                            <i class="bi bi-lightbulb text-warning"></i> <strong>Hint 3:</strong> 
+                            The secret directory is at the same level as "public". Path: <code>../../secret/flag.txt</code>
+                        </div>
+                        <div id="answer" class="answer-reveal">
+                            <strong><i class="bi bi-key-fill text-danger"></i> Answer:</strong>
+                            <div class="mt-2">
+                                <code class="bg-dark p-2 d-block rounded">../../secret/flag.txt</code>
+                                <small class="text-muted mt-2 d-block">This goes up from files → public → project root, then into secret/flag.txt!</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secure Side -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-success h-100">
+                <div class="card-header bg-success text-white">
+                    <strong><i class="bi bi-shield-lock"></i> Secure File Viewer</strong>
+                    <span class="badge bg-dark float-end">Path validation</span>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        <i class="bi bi-code-slash"></i> Backend: 
+                        <code>if realpath(file).startswith(allowed_dir):</code>
+                    </p>
+                    
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">File Path:</label>
+                            <input type="text" class="form-control font-monospace" 
+                                   name="path_file_secure" value="{{ path_file or '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-shield-check"></i> Secure Read
+                        </button>
+                    </form>
+                    
+                    {% if path_secure_result %}
+                    <div class="file-content mt-3">
+                        <pre class="mb-0 text-info"><code>{{ path_secure_result }}</code></pre>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info mt-3 mb-0 small">
+                        <strong><i class="bi bi-shield-check"></i> Defense:</strong>
+                        The secure version resolves the full path and verifies it stays within the allowed directory.
+                        <code>..</code> sequences are neutralized by checking the final absolute path.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chain Complete Summary -->
+    <div class="card border-info mt-4">
+        <div class="card-header bg-info text-dark">
+            <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Attack Chain Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="p-3 bg-danger bg-opacity-25 rounded">
+                        <i class="bi bi-database fs-1 text-danger"></i>
+                        <h6 class="mt-2">Stage 1: SQL Injection</h6>
+                        <small>Bypassed login authentication</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-warning bg-opacity-25 rounded">
+                        <i class="bi bi-terminal fs-1 text-warning"></i>
+                        <h6 class="mt-2">Stage 2: Command Injection</h6>
+                        <small>Discovered secret directory</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-success bg-opacity-25 rounded">
+                        <i class="bi bi-folder2-open fs-1 text-success"></i>
+                        <h6 class="mt-2">Stage 3: Path Traversal</h6>
+                        <small>Read sensitive files</small>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-warning mt-3 mb-0">
+                <strong><i class="bi bi-exclamation-triangle"></i> Key Takeaway:</strong>
+                Each vulnerability enabled the next attack. This is how real attackers chain vulnerabilities 
+                to achieve their goals!
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let hintsUsed = 0;
+
+function revealHint(num) {
+    for (let i = 1; i <= num; i++) {
+        document.getElementById('hint-' + i).classList.add('revealed');
+    }
+    if (num > hintsUsed) {
+        hintsUsed = num;
+        fetch('/api/gamification/record_hint', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({chain: 1, stage: 3})
+        });
+    }
+}
+
+function revealAnswer() {
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById('hint-' + i).classList.add('revealed');
+    }
+    document.getElementById('answer').classList.add('revealed');
+    hintsUsed = 4;
+    fetch('/api/gamification/record_hint', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({chain: 1, stage: 3})
+    });
+}
+
+// Check if stage was completed (found flag or secret file)
+{% if path_result and ('flag' in path_result.lower() or 'secret' in path_result.lower()) %}
+fetch('/api/gamification/complete_stage', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({chain: 1, stage: 3, hints_used: hintsUsed})
+}).then(r => r.json()).then(data => {
+    if (data.points_earned > 0) {
+        const banner = document.createElement('div');
+        banner.className = 'alert alert-success text-center mt-3';
+        banner.innerHTML = `<h4>🎉 Chain Complete!</h4><p>+${data.points_earned} points earned!</p>
+        ${data.new_achievements.length > 0 ? '<p>🏆 New Achievement: ' + data.new_achievements.map(a => a.name).join(', ') + '</p>' : ''}`;
+        document.querySelector('.container').prepend(banner);
+    }
+});
+{% endif %}
+</script>
+</body>
+</html>

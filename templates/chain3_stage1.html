@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Stage 1: Initial Access - Command Injection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .story-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-left: 4px solid #00bcd4;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 10px 10px 0;
+        }
+        .story-narrator { color: #00bcd4; font-style: italic; }
+        .hint-revealer {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border: 1px dashed #00bcd4;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .hint-level {
+            display: none;
+            padding: 10px;
+            margin-top: 10px;
+            background: rgba(0, 188, 212, 0.1);
+            border-left: 3px solid #00bcd4;
+            border-radius: 0 5px 5px 0;
+        }
+        .hint-level.revealed { display: block; animation: fadeIn 0.3s ease; }
+        .answer-reveal {
+            display: none;
+            padding: 15px;
+            margin-top: 10px;
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            border-radius: 5px;
+        }
+        .answer-reveal.revealed { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hint-btn { margin: 2px; }
+        .stage-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .stage-indicator { display: flex; gap: 10px; align-items: center; }
+        .stage-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .stage-dot.active { background: #00bcd4; color: #000; }
+        .stage-dot.completed { background: #28a745; color: #fff; }
+        .stage-dot.pending { background: #343a40; color: #6c757d; border: 2px solid #6c757d; }
+        .success-banner {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            animation: celebrate 0.5s ease;
+        }
+        .terminal-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .terminal-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27ca3f; }
+        .terminal-output {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        /* Animated Attack Flow Styles */
+        .attack-flow-container {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .attack-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .flow-step {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #21262d;
+            border: 2px solid #30363d;
+            min-width: 70px;
+            opacity: 0.4;
+            transform: scale(0.9);
+            transition: all 0.5s ease;
+        }
+        .flow-step.active {
+            opacity: 1;
+            transform: scale(1);
+            border-color: #00bcd4;
+            box-shadow: 0 0 20px rgba(0, 188, 212, 0.3);
+        }
+        .flow-step i { font-size: 1.2rem; display: block; margin-bottom: 5px; }
+        .flow-arrow { color: #6c757d; animation: pulse-arrow 1.5s infinite; }
+        .flow-arrow.active { color: #00bcd4; }
+        @keyframes pulse-arrow {
+            0%, 100% { opacity: 0.5; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/"><i class="bi bi-shield-lock"></i> Web Security Demo</a>
+        <span class="badge text-dark fs-6" style="background: #00bcd4;">
+            <i class="bi bi-terminal"></i> The Server Explorer - Stage 1
+        </span>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Stage Navigation -->
+    <div class="stage-nav">
+        <a href="/attack_chain_3" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Overview
+        </a>
+        <div class="stage-indicator">
+            <div class="stage-dot active">1</div>
+            <i class="bi bi-arrow-right text-muted"></i>
+            <a href="/attack_chain_3/stage2" class="stage-dot pending text-decoration-none">2</a>
+            <i class="bi bi-arrow-right text-muted"></i>
+            <a href="/attack_chain_3/stage3" class="stage-dot pending text-decoration-none">3</a>
+        </div>
+        <a href="/attack_chain_3/stage2" class="btn btn-outline-warning">
+            Next Stage <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Stage Header -->
+    <div class="text-center mb-4">
+        <h1><i class="bi bi-1-circle-fill" style="color: #00bcd4;"></i> Initial Access</h1>
+        <p class="lead text-muted">Command Injection Attack</p>
+    </div>
+
+    <!-- Story Box -->
+    <div class="story-box">
+        <h4><i class="bi bi-terminal-fill"></i> The Mission</h4>
+        <p class="story-narrator">
+            "You've discovered a web application with a 'ping' utility - a common feature for network diagnostics. 
+            But the developers made a critical mistake: they pass your input directly to the system shell. 
+            This gives you a foothold to execute any command on the server. Start by running basic commands 
+            to understand the environment..."
+        </p>
+    </div>
+
+    {% if cmd_result %}
+    <div class="success-banner mb-4">
+        <h3><i class="bi bi-trophy"></i> Stage 1 Complete!</h3>
+        <p class="mb-0">You've successfully executed commands on the server!</p>
+        <a href="/attack_chain_3/stage2" class="btn btn-light mt-3">
+            <i class="bi bi-arrow-right-circle"></i> Proceed to Stage 2: Reconnaissance
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Vulnerable Side -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-danger h-100">
+                <div class="card-header bg-danger text-white">
+                    <strong><i class="bi bi-terminal"></i> Vulnerable Ping Utility</strong>
+                    <span class="badge bg-dark float-end">Shell execution</span>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        <i class="bi bi-code-slash"></i> Backend: 
+                        <code>os.system("ping " + user_input)</code>
+                    </p>
+                    
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">Host to ping:</label>
+                            <input type="text" class="form-control font-monospace" 
+                                   name="host" value="{{ host or '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-broadcast"></i> Run Ping
+                        </button>
+                    </form>
+                    
+                    {% if cmd_result %}
+                    <div class="terminal-box mt-3">
+                        <div class="terminal-header">
+                            <div class="terminal-dot red"></div>
+                            <div class="terminal-dot yellow"></div>
+                            <div class="terminal-dot green"></div>
+                        </div>
+                        <div class="terminal-output">
+                            <pre class="mb-0 text-success"><code>{{ cmd_result }}</code></pre>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Progressive Hints System -->
+                    <div class="hint-revealer">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <strong><i class="bi bi-puzzle"></i> Need Help?</strong>
+                            <div>
+                                <button class="btn btn-sm btn-outline-warning hint-btn" onclick="revealHint(1)">Hint 1</button>
+                                <button class="btn btn-sm btn-outline-warning hint-btn" onclick="revealHint(2)">Hint 2</button>
+                                <button class="btn btn-sm btn-outline-warning hint-btn" onclick="revealHint(3)">Hint 3</button>
+                                <button class="btn btn-sm btn-outline-danger hint-btn" onclick="revealAnswer()">🚨 Reveal Answer</button>
+                            </div>
+                        </div>
+                        <div id="hint-1" class="hint-level">
+                            <i class="bi bi-lightbulb text-warning"></i> <strong>Hint 1:</strong> 
+                            The shell executes: <code>ping [your input]</code>. What if you add more commands after ping?
+                        </div>
+                        <div id="hint-2" class="hint-level">
+                            <i class="bi bi-lightbulb text-warning"></i> <strong>Hint 2:</strong> 
+                            On Windows, <code>&</code> chains commands. On Linux, <code>;</code> or <code>&&</code> work.
+                        </div>
+                        <div id="hint-3" class="hint-level">
+                            <i class="bi bi-lightbulb text-warning"></i> <strong>Hint 3:</strong> 
+                            Try: <code>127.0.0.1 & whoami</code> to run ping and then see who you're running as.
+                        </div>
+                        
+                        <!-- Animated Attack Flow Diagram -->
+                        <div id="attack-flow-diagram" class="hint-level">
+                            <h6 class="text-warning mt-3"><i class="bi bi-film"></i> Command Injection Flow</h6>
+                            <div class="attack-flow-container">
+                                <div class="attack-flow">
+                                    <div class="flow-step active" id="step-1">
+                                        <i class="bi bi-keyboard text-info"></i>
+                                        <small>Input</small>
+                                    </div>
+                                    <i class="bi bi-arrow-right flow-arrow active"></i>
+                                    <div class="flow-step" id="step-2">
+                                        <i class="bi bi-terminal text-warning"></i>
+                                        <small>Shell</small>
+                                    </div>
+                                    <i class="bi bi-arrow-right flow-arrow"></i>
+                                    <div class="flow-step" id="step-3">
+                                        <i class="bi bi-broadcast text-primary"></i>
+                                        <small>ping</small>
+                                    </div>
+                                    <i class="bi bi-plus text-danger" style="font-weight:bold;"></i>
+                                    <div class="flow-step" id="step-4">
+                                        <i class="bi bi-person-badge text-danger"></i>
+                                        <small>whoami</small>
+                                    </div>
+                                </div>
+                                <div class="mt-3 p-2 bg-dark rounded font-monospace small">
+                                    <span class="text-muted">Command:</span> ping <span class="text-success">127.0.0.1</span> <span class="text-danger">& whoami</span><br>
+                                    <span class="text-muted">Shell sees:</span> <span class="text-warning">Run ping, THEN run whoami</span><br>
+                                    <span class="text-muted">Result:</span> <span class="text-success">Attacker executes arbitrary commands!</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="answer" class="answer-reveal">
+                            <strong><i class="bi bi-key-fill text-danger"></i> Answer:</strong>
+                            <div class="mt-2">
+                                <code class="bg-dark p-2 d-block rounded">127.0.0.1 & whoami</code>
+                                <small class="text-muted mt-2 d-block">This pings localhost, then runs whoami to show the current user!</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secure Side -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-success h-100">
+                <div class="card-header bg-success text-white">
+                    <strong><i class="bi bi-shield-lock"></i> Secure Ping Utility</strong>
+                    <span class="badge bg-dark float-end">Input validation</span>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        <i class="bi bi-code-slash"></i> Backend: 
+                        <code>subprocess.run(["ping", sanitized_host])</code>
+                    </p>
+                    
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">Host to ping:</label>
+                            <input type="text" class="form-control font-monospace" 
+                                   name="host_secure" value="{{ host or '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-shield-check"></i> Secure Ping
+                        </button>
+                    </form>
+                    
+                    {% if cmd_secure_result %}
+                    <div class="terminal-box mt-3" style="border-color: #28a745;">
+                        <div class="terminal-output">
+                            <pre class="mb-0 text-info"><code>{{ cmd_secure_result }}</code></pre>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info mt-3 mb-0 small">
+                        <strong><i class="bi bi-shield-check"></i> Defense:</strong>
+                        <ul class="mb-0">
+                            <li>Use <code>subprocess.run()</code> with array arguments</li>
+                            <li>Never use <code>shell=True</code></li>
+                            <li>Validate input is a valid IP/hostname only</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function revealHint(num) {
+    for (let i = 1; i <= num; i++) {
+        document.getElementById('hint-' + i).classList.add('revealed');
+    }
+    if (num >= 3) {
+        document.getElementById('attack-flow-diagram').classList.add('revealed');
+        animateCmdFlow();
+    }
+}
+
+function animateCmdFlow() {
+    const steps = ['step-1', 'step-2', 'step-3', 'step-4'];
+    const arrows = document.querySelectorAll('.flow-arrow');
+    let currentStep = 0;
+    
+    function nextStep() {
+        if (currentStep < steps.length) {
+            document.getElementById(steps[currentStep]).classList.add('active');
+            if (currentStep < arrows.length) {
+                arrows[currentStep].classList.add('active');
+            }
+            currentStep++;
+            setTimeout(nextStep, 500);
+        }
+    }
+    setTimeout(nextStep, 300);
+}
+
+function revealAnswer() {
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById('hint-' + i).classList.add('revealed');
+    }
+    document.getElementById('attack-flow-diagram').classList.add('revealed');
+    animateCmdFlow();
+    document.getElementById('answer').classList.add('revealed');
+}
+</script>
+</body>
+</html>

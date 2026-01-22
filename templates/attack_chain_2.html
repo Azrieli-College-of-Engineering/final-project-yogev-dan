@@ -2,160 +2,295 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Attack Chain 2: XSS → CSRF</title>
+    <title>Attack Chain 2: The Identity Thief</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1a3e 50%, #4a1a4a 100%);
+            padding: 60px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .chain-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .chain-node {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            color: #fff;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .chain-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(233, 30, 99, 0.5);
+        }
+        .chain-node.completed {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .chain-node i { font-size: 2rem; }
+        .chain-arrow {
+            font-size: 2rem;
+            color: #e91e63;
+        }
+        .stage-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .stage-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .stage-card.completed {
+            border-color: #28a745 !important;
+        }
+        .stage-card.completed .card-header {
+            background: #28a745 !important;
+        }
+        .story-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-left: 4px solid #e91e63;
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+        }
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            color: #e91e63;
+        }
+    </style>
 </head>
 <body data-bs-theme="dark">
 <nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="/"><i class="bi bi-shield-lock"></i> Web Security Demo</a>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge fs-6" style="background: #e91e63;">
+                <i class="bi bi-link-45deg"></i> Attack Chain 2
+            </span>
+            <div class="timer-display" id="timer">
+                <i class="bi bi-stopwatch"></i> <span id="timerValue">00:00</span>
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="card border-warning mb-4">
-        <div class="card-header bg-warning text-dark">
-            <h4 class="mb-0"><i class="bi bi-link-45deg"></i> Interactive Chain 2: XSS → CSRF Bypass</h4>
+<div class="container">
+    <!-- Progress Bar -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span><i class="bi bi-bar-chart-fill"></i> Chain Progress</span>
+            <span id="progressPercent">0%</span>
         </div>
-        <div class="card-body">
-            <div class="alert alert-warning">
-                <h5><i class="bi bi-exclamation-triangle-fill"></i> Interactive: How XSS Defeats CSRF</h5>
-                <p class="mb-0">XSS steals CSRF tokens. See vulnerable vs secure side-by-side.</p>
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 id="progressBar" style="width: 0%; background: #e91e63;">
             </div>
-
-            <h5 class="mb-3"><i class="bi bi-1-circle-fill"></i> Step 1: XSS</h5>
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="card border-danger h-100">
-                        <div class="card-header bg-danger text-white"><strong>🔓 Vulnerable</strong></div>
-                        <div class="card-body">
-                            <form method="get">
-                                <div class="mb-2">
-                                    <label class="form-label small">Name:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="xss_name" value="{{ xss_name or '' }}" placeholder="<script>alert('XSS')</script>">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-danger w-100"><i class="bi bi-bug"></i> Inject</button>
-                            </form>
-                            {% if xss_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small">
-                                <strong>Output:</strong>
-                                <div class="border p-2 mt-2 bg-white text-dark">{{ xss_result|safe }}</div>
-                                <small class="text-warning">⚠️ Script executes!</small>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-success h-100">
-                        <div class="card-header bg-success text-white"><strong>🔒 Secure</strong></div>
-                        <div class="card-body">
-                            <form method="get">
-                                <div class="mb-2">
-                                    <label class="form-label small">Name:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="xss_name" value="{{ xss_name or '' }}" placeholder="<script>alert('XSS')</script>">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-shield-check"></i> Test Secure</button>
-                            </form>
-                            {% if xss_secure_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small">
-                                <strong>Output:</strong>
-                                <div class="border p-2 mt-2 bg-white text-dark">{{ xss_secure_result|safe }}</div>
-                                <small class="text-success">✅ Displayed as text</small>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <h5 class="mb-3"><i class="bi bi-2-circle-fill"></i> Step 2: Token Theft</h5>
-            <div class="card border-warning mb-4">
-                <div class="card-body">
-                    <p>XSS can steal CSRF tokens:</p>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="alert alert-danger small">
-                                <strong>Read Cookie:</strong>
-                                <pre class="mb-0"><code>document.cookie</code></pre>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="alert alert-danger small">
-                                <strong>Extract Token:</strong>
-                                <pre class="mb-0"><code>fetch('/secure').then(r=>r.text())</code></pre>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="alert alert-info mb-0">Current token: <code>{{ demo_csrf_token }}</code></div>
-                </div>
-            </div>
-
-            <h5 class="mb-3"><i class="bi bi-3-circle-fill"></i> Step 3: CSRF Attack</h5>
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="card border-danger h-100">
-                        <div class="card-header bg-danger text-white"><strong>🔓 No CSRF Token</strong></div>
-                        <div class="card-body">
-                            <form method="get">
-                                <input type="hidden" name="xss_name" value="{{ xss_name }}">
-                                <div class="mb-2">
-                                    <label class="form-label small">New Password:</label>
-                                    <input type="text" class="form-control form-control-sm" 
-                                           name="csrf_password" value="{{ csrf_password or '' }}" placeholder="HACKED123">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-danger w-100"><i class="bi bi-key"></i> Change</button>
-                            </form>
-                            {% if csrf_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small">{{ csrf_result }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-success h-100">
-                        <div class="card-header bg-success text-white"><strong>🔒 Token Required</strong></div>
-                        <div class="card-body">
-                            <form method="get">
-                                <input type="hidden" name="xss_name" value="{{ xss_name }}">
-                                <input type="hidden" name="csrf_password" value="{{ csrf_password }}">
-                                <div class="mb-2">
-                                    <label class="form-label small">Token:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="csrf_token" value="{{ csrf_token if csrf_token else 'wrong' }}">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-outline-success btn-sm w-100">Try Invalid</button>
-                            </form>
-                            <form method="get" class="mt-2">
-                                <input type="hidden" name="xss_name" value="{{ xss_name }}">
-                                <input type="hidden" name="csrf_password" value="{{ csrf_password }}">
-                                <input type="hidden" name="csrf_token" value="{{ demo_csrf_token }}">
-                                <button type="submit" class="btn btn-sm btn-success w-100">Try Valid</button>
-                            </form>
-                            {% if csrf_secure_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small">{{ csrf_secure_result }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="alert alert-info">
-                <h6><i class="bi bi-lightbulb"></i> Key Points:</h6>
-                <ul class="mb-0">
-                    <li>XSS bypasses CSRF protection by stealing tokens</li>
-                    <li>Fix XSS first - it defeats most client defenses</li>
-                    <li>Defense: Escape output + CSRF tokens + CSP + HttpOnly cookies</li>
-                </ul>
-            </div>
-            <a href="/" class="btn btn-primary mt-3">Back to Home</a>
         </div>
     </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="display-4"><i class="bi bi-incognito" style="color: #e91e63;"></i></h1>
+        <h2 class="display-5">The Identity Thief</h2>
+        <p class="lead text-muted">
+            XSS → Session Hijacking → CSRF
+        </p>
+        
+        <!-- Chain Visualization -->
+        <div class="chain-visual">
+            <div class="chain-node" id="node1">
+                <i class="bi bi-code-slash"></i>
+                <small>XSS</small>
+            </div>
+            <i class="bi bi-arrow-right chain-arrow"></i>
+            <div class="chain-node" id="node2">
+                <i class="bi bi-cookie"></i>
+                <small>Session</small>
+            </div>
+            <i class="bi bi-arrow-right chain-arrow"></i>
+            <div class="chain-node" id="node3">
+                <i class="bi bi-arrow-repeat"></i>
+                <small>CSRF</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Box -->
+    <div class="story-box mb-4">
+        <h4><i class="bi bi-book"></i> The Scenario</h4>
+        <p class="mb-0" style="color: #e91e63; font-style: italic;">
+            "A high-value target uses a popular web application. Your mission: take over their account without 
+            ever knowing their password. First, find an XSS vulnerability to inject malicious JavaScript. Then, 
+            use it to steal their session cookie. Finally, exploit CSRF to perform actions as the victim. 
+            This is how real identity theft works in the digital age..."
+        </p>
+    </div>
+
+    <!-- Stage Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <a href="/attack_chain_2/stage1" class="text-decoration-none">
+                <div class="card stage-card h-100" style="border-color: #e91e63;">
+                    <div class="card-header text-white" style="background: #e91e63;">
+                        <h5 class="mb-0"><i class="bi bi-1-circle-fill"></i> Stage 1</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-code-slash" style="font-size: 4rem; color: #e91e63;"></i>
+                        <h4 class="mt-3">Injecting the Trap</h4>
+                        <p class="text-muted">Cross-Site Scripting (XSS)</p>
+                        <p class="small">
+                            Find input fields that don't sanitize user input and inject malicious JavaScript 
+                            that executes in victims' browsers.
+                        </p>
+                        <span class="btn w-100" style="background: #e91e63; color: white;">
+                            <i class="bi bi-play-fill"></i> Start Stage
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <a href="/attack_chain_2/stage2" class="text-decoration-none">
+                <div class="card stage-card h-100" style="border-color: #e91e63;">
+                    <div class="card-header text-white" style="background: #e91e63;">
+                        <h5 class="mb-0"><i class="bi bi-2-circle-fill"></i> Stage 2</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-cookie" style="font-size: 4rem; color: #e91e63;"></i>
+                        <h4 class="mt-3">Stealing the Session</h4>
+                        <p class="text-muted">Session Hijacking</p>
+                        <p class="small">
+                            Craft a payload that exfiltrates the victim's session cookie to your attacker 
+                            server. With it, you become them.
+                        </p>
+                        <span class="btn w-100" style="border-color: #e91e63; color: #e91e63;">
+                            <i class="bi bi-play-fill"></i> Start Stage
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <a href="/attack_chain_2/stage3" class="text-decoration-none">
+                <div class="card stage-card h-100" style="border-color: #e91e63;">
+                    <div class="card-header text-white" style="background: #e91e63;">
+                        <h5 class="mb-0"><i class="bi bi-3-circle-fill"></i> Stage 3</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-arrow-repeat" style="font-size: 4rem; color: #e91e63;"></i>
+                        <h4 class="mt-3">Hijacking Actions</h4>
+                        <p class="text-muted">Cross-Site Request Forgery</p>
+                        <p class="small">
+                            Create a malicious page that makes victims perform actions without their 
+                            knowledge, like changing their password.
+                        </p>
+                        <span class="btn w-100" style="border-color: #e91e63; color: #e91e63;">
+                            <i class="bi bi-play-fill"></i> Start Stage
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Learning Objectives -->
+    <div class="card border-info mt-4">
+        <div class="card-header bg-info text-dark">
+            <h5 class="mb-0"><i class="bi bi-mortarboard-fill"></i> Learning Objectives</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6><i class="bi bi-check-circle text-success"></i> XSS</h6>
+                    <ul class="small">
+                        <li>Reflected vs Stored XSS</li>
+                        <li>HTML escaping importance</li>
+                        <li>Content Security Policy</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6><i class="bi bi-check-circle text-success"></i> Session Security</h6>
+                    <ul class="small">
+                        <li>Cookie security flags</li>
+                        <li>HttpOnly protection</li>
+                        <li>Session management</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6><i class="bi bi-check-circle text-success"></i> CSRF</h6>
+                    <ul class="small">
+                        <li>Anti-CSRF tokens</li>
+                        <li>SameSite cookies</li>
+                        <li>Request origin validation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4 mb-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+        <a href="/defense_guide" class="btn btn-outline-success">
+            <i class="bi bi-shield-check"></i> Defense Guide
+        </a>
+    </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Start timer on page load
+fetch('/api/gamification/start_timer', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({chain: 2})
+});
+
+// Timer display
+setInterval(() => {
+    fetch('/api/gamification/get_timer/2')
+        .then(r => r.json())
+        .then(data => {
+            const mins = Math.floor(data.elapsed / 60);
+            const secs = data.elapsed % 60;
+            document.getElementById('timerValue').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        });
+}, 1000);
+
+// Load progress status
+fetch('/api/gamification/status')
+    .then(r => r.json())
+    .then(data => {
+        const progress = data.progress.chain2 || {};
+        let completed = 0;
+        
+        if (progress.stage1) { document.getElementById('node1').classList.add('completed'); completed++; }
+        if (progress.stage2) { document.getElementById('node2').classList.add('completed'); completed++; }
+        if (progress.stage3) { document.getElementById('node3').classList.add('completed'); completed++; }
+        
+        const percent = Math.round((completed / 3) * 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').textContent = percent + '%';
+    });
+</script>
 </body>
 </html>

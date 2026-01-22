@@ -2,174 +2,330 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Attack Chain 3: Reconnaissance → File Access</title>
+    <title>Attack Chain 3: The Server Explorer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a2332 100%);
+            padding: 60px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid #00bcd4;
+        }
+        .chain-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        .chain-node {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+            color: #000;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .chain-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 188, 212, 0.5);
+        }
+        .chain-node.completed {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .chain-node i { font-size: 2rem; }
+        .chain-arrow {
+            font-size: 2rem;
+            color: #00bcd4;
+        }
+        .stage-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .stage-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .stage-card.completed {
+            border-color: #28a745 !important;
+        }
+        .stage-card.completed .card-header {
+            background: #28a745 !important;
+        }
+        .story-box {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            border-left: 4px solid #00bcd4;
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+        }
+        .terminal-preview {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin-top: 20px;
+        }
+        .terminal-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .terminal-dot.red { background: #ff5f56; }
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            color: #00bcd4;
+        }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27ca3f; }
+    </style>
 </head>
 <body data-bs-theme="dark">
 <nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="/"><i class="bi bi-shield-lock"></i> Web Security Demo</a>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge fs-6" style="background: #00bcd4; color: #000;">
+                <i class="bi bi-link-45deg"></i> Attack Chain 3
+            </span>
+            <div class="timer-display" id="timer">
+                <i class="bi bi-stopwatch"></i> <span id="timerValue">00:00</span>
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="card border-warning mb-4">
-        <div class="card-header bg-warning text-dark">
-            <h4 class="mb-0"><i class="bi bi-link-45deg"></i> Interactive Chain 3: Reconnaissance → Exploitation</h4>
+<div class="container">
+    <!-- Progress Bar -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span><i class="bi bi-bar-chart-fill"></i> Chain Progress</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 id="progressBar" style="width: 0%; background: #00bcd4;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="display-4"><i class="bi bi-hdd-rack" style="color: #00bcd4;"></i></h1>
+        <h2 class="display-5">The Server Explorer</h2>
+        <p class="lead text-muted">
+            Command Injection → Reconnaissance → Path Traversal
+        </p>
+        
+        <!-- Chain Visualization -->
+        <div class="chain-visual">
+            <div class="chain-node" id="node1">
+                <i class="bi bi-terminal"></i>
+                <small>Command</small>
+            </div>
+            <i class="bi bi-arrow-right chain-arrow"></i>
+            <div class="chain-node" id="node2">
+                <i class="bi bi-binoculars"></i>
+                <small>Recon</small>
+            </div>
+            <i class="bi bi-arrow-right chain-arrow"></i>
+            <div class="chain-node" id="node3">
+                <i class="bi bi-file-earmark-lock"></i>
+                <small>Exfil</small>
+            </div>
+        </div>
+        
+        <!-- Terminal Preview -->
+        <div class="terminal-preview text-start mx-auto" style="max-width: 500px;">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+            </div>
+            <code class="text-success">$ whoami</code><br>
+            <code class="text-muted">www-data</code><br>
+            <code class="text-success">$ cat /secret/flag.txt</code><br>
+            <code class="text-warning">FLAG{you_found_it}</code>
+        </div>
+    </div>
+
+    <!-- Story Box -->
+    <div class="story-box mb-4">
+        <h4><i class="bi bi-book"></i> The Scenario</h4>
+        <p class="mb-0" style="color: #00bcd4; font-style: italic;">
+            "You've found a server with a web-based diagnostic tool. It looks harmless - just a ping utility. 
+            But the developers made a fatal mistake: they didn't sanitize user input before passing it to the 
+            shell. This gives you a foothold. From here, explore the file system, map out the server, and 
+            ultimately exfiltrate sensitive data. This is a classic penetration testing scenario..."
+        </p>
+    </div>
+
+    <!-- Stage Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <a href="/attack_chain_3/stage1" class="text-decoration-none">
+                <div class="card stage-card h-100" style="border-color: #00bcd4;">
+                    <div class="card-header text-dark" style="background: #00bcd4;">
+                        <h5 class="mb-0"><i class="bi bi-1-circle-fill"></i> Stage 1</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-terminal" style="font-size: 4rem; color: #00bcd4;"></i>
+                        <h4 class="mt-3">Initial Access</h4>
+                        <p class="text-muted">Command Injection</p>
+                        <p class="small">
+                            Exploit a vulnerable ping utility to execute arbitrary commands on the server. 
+                            This is your foothold into the system.
+                        </p>
+                        <span class="btn w-100" style="background: #00bcd4; color: #000;">
+                            <i class="bi bi-play-fill"></i> Start Stage
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <a href="/attack_chain_3/stage2" class="text-decoration-none">
+                <div class="card stage-card h-100" style="border-color: #00bcd4;">
+                    <div class="card-header text-dark" style="background: #00bcd4;">
+                        <h5 class="mb-0"><i class="bi bi-2-circle-fill"></i> Stage 2</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-binoculars" style="font-size: 4rem; color: #00bcd4;"></i>
+                        <h4 class="mt-3">Reconnaissance</h4>
+                        <p class="text-muted">Server Mapping</p>
+                        <p class="small">
+                            Explore the file system using directory listing commands. Find hidden directories 
+                            that might contain sensitive data.
+                        </p>
+                        <span class="btn w-100" style="border-color: #00bcd4; color: #00bcd4;">
+                            <i class="bi bi-play-fill"></i> Start Stage
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <a href="/attack_chain_3/stage3" class="text-decoration-none">
+                <div class="card stage-card h-100" style="border-color: #00bcd4;">
+                    <div class="card-header text-dark" style="background: #00bcd4;">
+                        <h5 class="mb-0"><i class="bi bi-3-circle-fill"></i> Stage 3</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-lock" style="font-size: 4rem; color: #00bcd4;"></i>
+                        <h4 class="mt-3">Data Exfiltration</h4>
+                        <p class="text-muted">Path Traversal</p>
+                        <p class="small">
+                            Use path traversal to escape the allowed directory and read the sensitive 
+                            files you discovered during reconnaissance.
+                        </p>
+                        <span class="btn w-100" style="border-color: #00bcd4; color: #00bcd4;">
+                            <i class="bi bi-play-fill"></i> Start Stage
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Learning Objectives -->
+    <div class="card border-info mt-4">
+        <div class="card-header bg-info text-dark">
+            <h5 class="mb-0"><i class="bi bi-mortarboard-fill"></i> Learning Objectives</h5>
         </div>
         <div class="card-body">
-            <div class="alert alert-warning">
-                <h5><i class="bi bi-exclamation-triangle-fill"></i> Interactive Demo: Vulnerable vs Secure</h5>
-                <p class="mb-0">Try the same exploits on both sides to see how security measures stop attacks.</p>
-            </div>
-
-            <!-- Step 1: Command Injection for Reconnaissance -->
-            <h5 class="mb-3"><i class="bi bi-1-circle-fill"></i> Step 1: Command Injection (Reconnaissance)</h5>
-            <div class="row mb-4">
-                <!-- Vulnerable Side -->
-                <div class="col-md-6">
-                    <div class="card border-danger h-100">
-                        <div class="card-header bg-danger text-white">
-                            <strong>🔓 Vulnerable: Shell Command Execution</strong>
-                        </div>
-                        <div class="card-body">
-                            <form method="get">
-                                <div class="mb-2">
-                                    <label class="form-label small">Search Pattern:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="cmd_vuln" value="{{ cmd_vuln or '' }}" placeholder="txt || dir /s /b secret">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-danger w-100">
-                                    <i class="bi bi-terminal"></i> Execute Command
-                                </button>
-                            </form>
-                            
-                            {% if cmd_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small" style="max-height: 200px; overflow-y: auto;">
-                                <strong>Command Output:</strong>
-                                <pre class="mb-0 small"><code>{{ cmd_result }}</code></pre>
-                            </div>
-                            {% endif %}
-                            
-                            <div class="mt-3">
-                                <small class="text-muted">Try: <code>txt || dir /s /b secret</code></small>
-                            </div>
-                        </div>
-                    </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <h6><i class="bi bi-check-circle text-success"></i> Command Injection</h6>
+                    <ul class="small">
+                        <li>Shell command chaining</li>
+                        <li>Input sanitization</li>
+                        <li>Safe subprocess handling</li>
+                    </ul>
                 </div>
-
-                <!-- Secure Side -->
-                <div class="col-md-6">
-                    <div class="card border-success h-100">
-                        <div class="card-header bg-success text-white">
-                            <strong>🔒 Secure: Sanitized os.walk()</strong>
-                        </div>
-                        <div class="card-body">
-                            <form method="get">
-                                <div class="mb-2">
-                                    <label class="form-label small">Search Pattern:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="cmd_secure" value="{{ cmd_secure or '' }}" placeholder="txt || dir /s /b secret">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-success w-100">
-                                    <i class="bi bi-shield-check"></i> Safe Search
-                                </button>
-                            </form>
-                            
-                            {% if cmd_secure_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small" style="max-height: 200px; overflow-y: auto;">
-                                <strong>Safe Output:</strong>
-                                <pre class="mb-0 small"><code>{{ cmd_secure_result }}</code></pre>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="col-md-4">
+                    <h6><i class="bi bi-check-circle text-success"></i> Reconnaissance</h6>
+                    <ul class="small">
+                        <li>Information gathering</li>
+                        <li>File system enumeration</li>
+                        <li>Identifying targets</li>
+                    </ul>
                 </div>
-            </div>
-
-            <!-- Step 2: Path Traversal for File Access -->
-            <h5 class="mb-3"><i class="bi bi-2-circle-fill"></i> Step 2: Path Traversal (File Access)</h5>
-            <div class="row mb-4">
-                <!-- Vulnerable Side -->
-                <div class="col-md-6">
-                    <div class="card border-danger h-100">
-                        <div class="card-header bg-danger text-white">
-                            <strong>🔓 Vulnerable: Unrestricted File Access</strong>
-                        </div>
-                        <div class="card-body">
-                            <form method="get">
-                                <input type="hidden" name="cmd_vuln" value="{{ cmd_vuln }}">
-                                <div class="mb-2">
-                                    <label class="form-label small">File Path:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="path_vuln" value="{{ path_vuln or '' }}" placeholder="../secret/flag.txt">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-danger w-100">
-                                    <i class="bi bi-file-earmark-text"></i> Read File
-                                </button>
-                            </form>
-                            
-                            {% if path_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small">
-                                <strong>File Contents:</strong>
-                                <pre class="mb-0 small"><code>{{ path_result }}</code></pre>
-                            </div>
-                            {% endif %}
-                            
-                            <div class="mt-3">
-                                <small class="text-muted">Try: <code>../secret/flag.txt</code></small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Secure Side -->
-                <div class="col-md-6">
-                    <div class="card border-success h-100">
-                        <div class="card-header bg-success text-white">
-                            <strong>🔒 Secure: Path Validation</strong>
-                        </div>
-                        <div class="card-body">
-                            <form method="get">
-                                <input type="hidden" name="cmd_vuln" value="{{ cmd_vuln }}">
-                                <input type="hidden" name="cmd_secure" value="{{ cmd_secure }}">
-                                <div class="mb-2">
-                                    <label class="form-label small">File Path:</label>
-                                    <input type="text" class="form-control form-control-sm font-monospace" 
-                                           name="path_secure" value="{{ path_secure or '' }}" placeholder="../secret/flag.txt">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-success w-100">
-                                    <i class="bi bi-shield-check"></i> Safe Read
-                                </button>
-                            </form>
-                            
-                            {% if path_secure_result %}
-                            <div class="alert alert-dark mt-3 mb-0 small">
-                                <strong>Access Result:</strong>
-                                <pre class="mb-0 small"><code>{{ path_secure_result }}</code></pre>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="col-md-4">
+                    <h6><i class="bi bi-check-circle text-success"></i> Path Traversal</h6>
+                    <ul class="small">
+                        <li>Directory escape</li>
+                        <li>Path validation</li>
+                        <li>Chroot/sandbox concepts</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="alert alert-info">
-        <h5><i class="bi bi-lightbulb"></i> Key Security Lessons:</h5>
-        <ul class="mb-0">
-            <li><strong>Command Injection:</strong> Never use <code>shell=True</code> with user input. Use safe APIs like <code>os.walk()</code></li>
-            <li><strong>Path Traversal:</strong> Validate resolved paths stay within allowed directories using <code>os.path.commonpath()</code></li>
-            <li><strong>Defense in Depth:</strong> Even if one vulnerability is exploited, proper path validation prevents the second attack</li>
-        </ul>
+    <div class="text-center mt-4 mb-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+        <a href="/defense_guide" class="btn btn-outline-success">
+            <i class="bi bi-shield-check"></i> Defense Guide
+        </a>
     </div>
-
-    <a href="/" class="btn btn-primary"><i class="bi bi-house"></i> Back to Home</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Start timer on page load
+fetch('/api/gamification/start_timer', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({chain: 3})
+});
+
+// Timer display
+setInterval(() => {
+    fetch('/api/gamification/get_timer/3')
+        .then(r => r.json())
+        .then(data => {
+            const mins = Math.floor(data.elapsed / 60);
+            const secs = data.elapsed % 60;
+            document.getElementById('timerValue').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        });
+}, 1000);
+
+// Load progress status
+fetch('/api/gamification/status')
+    .then(r => r.json())
+    .then(data => {
+        const progress = data.progress.chain3 || {};
+        let completed = 0;
+        
+        if (progress.stage1) { document.getElementById('node1').classList.add('completed'); completed++; }
+        if (progress.stage2) { document.getElementById('node2').classList.add('completed'); completed++; }
+        if (progress.stage3) { document.getElementById('node3').classList.add('completed'); completed++; }
+        
+        const percent = Math.round((completed / 3) * 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').textContent = percent + '%';
+    });
+</script>
 </body>
 </html>

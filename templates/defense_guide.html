@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Defense Implementation Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        .defense-card {
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        .defense-card:hover {
+            transform: translateX(5px);
+        }
+        .attack-flow {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .flow-node {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 80px;
+            border-radius: 10px;
+            margin: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            margin: 0 5px;
+        }
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .owasp-badge {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/"><i class="bi bi-shield-lock"></i> Web Security Demo</a>
+        <span class="badge bg-success text-dark fs-6">
+            <i class="bi bi-shield-check"></i> Defense Guide
+        </span>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="text-center mb-5">
+        <h1 class="display-4"><i class="bi bi-shield-fill-check text-success"></i></h1>
+        <h2>Defense Implementation Guide</h2>
+        <p class="lead text-muted">Learn how to protect your applications from common vulnerabilities</p>
+    </div>
+
+    <!-- Attack Flow Diagrams -->
+    <section class="mb-5">
+        <h3><i class="bi bi-diagram-3"></i> Attack Chain Flow Diagrams</h3>
+        
+        <!-- Chain 1 Flow -->
+        <div class="attack-flow">
+            <h5 class="text-warning"><i class="bi bi-database-fill-lock"></i> Chain 1: The Database Heist</h5>
+            <div class="d-flex flex-wrap align-items-center justify-content-center">
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-database"></i><br>
+                        <small>SQL Injection</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-warning"></i>
+                <div class="flow-node bg-warning text-dark">
+                    <div>
+                        <i class="bi bi-key"></i><br>
+                        <small>Auth Bypass</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-warning"></i>
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-terminal"></i><br>
+                        <small>Command Inj</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-warning"></i>
+                <div class="flow-node bg-info text-dark">
+                    <div>
+                        <i class="bi bi-search"></i><br>
+                        <small>Discovery</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-warning"></i>
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-folder2-open"></i><br>
+                        <small>Path Traversal</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-warning"></i>
+                <div class="flow-node bg-dark border border-danger">
+                    <div>
+                        <i class="bi bi-file-earmark-lock"></i><br>
+                        <small>Data Stolen!</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chain 2 Flow -->
+        <div class="attack-flow">
+            <h5 class="text-info"><i class="bi bi-person-fill-gear"></i> Chain 2: The Identity Thief</h5>
+            <div class="d-flex flex-wrap align-items-center justify-content-center">
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-code-slash"></i><br>
+                        <small>XSS</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-info"></i>
+                <div class="flow-node bg-warning text-dark">
+                    <div>
+                        <i class="bi bi-cookie"></i><br>
+                        <small>Cookie Theft</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-info"></i>
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-person-badge"></i><br>
+                        <small>Session Hijack</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-info"></i>
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-arrow-repeat"></i><br>
+                        <small>CSRF Attack</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-info"></i>
+                <div class="flow-node bg-dark border border-danger">
+                    <div>
+                        <i class="bi bi-person-x"></i><br>
+                        <small>Account Taken!</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chain 3 Flow -->
+        <div class="attack-flow">
+            <h5 class="text-success"><i class="bi bi-pc-display-horizontal"></i> Chain 3: The Server Explorer</h5>
+            <div class="d-flex flex-wrap align-items-center justify-content-center">
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-terminal"></i><br>
+                        <small>Cmd Injection</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-success"></i>
+                <div class="flow-node bg-info text-dark">
+                    <div>
+                        <i class="bi bi-binoculars"></i><br>
+                        <small>Recon</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-success"></i>
+                <div class="flow-node bg-warning text-dark">
+                    <div>
+                        <i class="bi bi-folder"></i><br>
+                        <small>Find Secrets</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-success"></i>
+                <div class="flow-node bg-danger text-white">
+                    <div>
+                        <i class="bi bi-folder2-open"></i><br>
+                        <small>Path Traversal</small>
+                    </div>
+                </div>
+                <i class="bi bi-arrow-right flow-arrow text-success"></i>
+                <div class="flow-node bg-dark border border-danger">
+                    <div>
+                        <i class="bi bi-cloud-download"></i><br>
+                        <small>Exfiltration!</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Defense Implementations -->
+    <section>
+        <h3><i class="bi bi-code-square"></i> Defense Implementations</h3>
+        
+        <ul class="nav nav-pills mb-4" id="defenseTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#sql" type="button">
+                    <i class="bi bi-database"></i> SQL Injection
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#xss" type="button">
+                    <i class="bi bi-code-slash"></i> XSS
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#csrf" type="button">
+                    <i class="bi bi-arrow-repeat"></i> CSRF
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#cmd" type="button">
+                    <i class="bi bi-terminal"></i> Command Injection
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#path" type="button">
+                    <i class="bi bi-folder2-open"></i> Path Traversal
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- SQL Injection -->
+            <div class="tab-pane fade show active" id="sql">
+                <div class="card defense-card border-danger mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-database"></i> SQL Injection Defense
+                            <span class="badge bg-dark owasp-badge float-end">OWASP A03:2021</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>❌ Vulnerable Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># DANGEROUS: String concatenation allows SQL injection
+query = f"SELECT * FROM users WHERE email = '{email}' AND password = '{password}'"
+cursor.execute(query)</code></pre>
+                        </div>
+
+                        <h6>✅ Secure Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># SAFE: Parameterized queries prevent SQL injection
+cursor.execute(
+    "SELECT * FROM users WHERE email = ? AND password = ?",
+    (email, password)
+)
+
+# Or using named parameters:
+cursor.execute(
+    "SELECT * FROM users WHERE email = :email",
+    {"email": email}
+)</code></pre>
+                        </div>
+
+                        <h6><i class="bi bi-lightbulb text-warning"></i> Best Practices:</h6>
+                        <ul>
+                            <li><strong>Always use parameterized queries</strong> - Never concatenate user input</li>
+                            <li><strong>Use an ORM</strong> - SQLAlchemy, Django ORM handle escaping automatically</li>
+                            <li><strong>Validate input types</strong> - Ensure emails look like emails, numbers are numbers</li>
+                            <li><strong>Principle of least privilege</strong> - DB user should have minimal permissions</li>
+                            <li><strong>Use stored procedures</strong> - Pre-compiled queries are harder to inject</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- XSS -->
+            <div class="tab-pane fade" id="xss">
+                <div class="card defense-card border-info mb-4">
+                    <div class="card-header bg-info text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-code-slash"></i> Cross-Site Scripting (XSS) Defense
+                            <span class="badge bg-dark owasp-badge float-end">OWASP A03:2021</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>❌ Vulnerable Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># DANGEROUS: Direct HTML insertion
+html = f"&lt;h1&gt;Welcome, {name}!&lt;/h1&gt;"
+return html</code></pre>
+                        </div>
+
+                        <h6>✅ Secure Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># SAFE: Use template engine with auto-escaping
+from markupsafe import escape
+
+# Option 1: Manual escaping
+safe_name = escape(name)
+
+# Option 2: Use Jinja2 templates (auto-escapes by default)
+return render_template("welcome.html", name=name)
+# In template: {{ name }} is automatically escaped</code></pre>
+                        </div>
+
+                        <h6><i class="bi bi-lightbulb text-warning"></i> Best Practices:</h6>
+                        <ul>
+                            <li><strong>Use template engines</strong> - Jinja2, Django templates auto-escape by default</li>
+                            <li><strong>Content Security Policy (CSP)</strong> - Restrict script sources</li>
+                            <li><strong>HttpOnly cookies</strong> - Prevent JavaScript access to sensitive cookies</li>
+                            <li><strong>Sanitize HTML</strong> - Use bleach or DOMPurify for rich text</li>
+                            <li><strong>Encode output context-aware</strong> - HTML, JS, URL encoding differs</li>
+                        </ul>
+
+                        <h6><i class="bi bi-shield-check text-success"></i> CSP Header Example:</h6>
+                        <div class="code-block">
+<pre><code class="language-python"># Add Content Security Policy header
+@app.after_request
+def add_security_headers(response):
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net;"
+    )
+    return response</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSRF -->
+            <div class="tab-pane fade" id="csrf">
+                <div class="card defense-card border-warning mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-arrow-repeat"></i> CSRF Defense
+                            <span class="badge bg-dark owasp-badge float-end">OWASP A01:2021</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>❌ Vulnerable Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># DANGEROUS: No CSRF token validation
+@app.route("/change_password", methods=["POST"])
+def change_password():
+    new_password = request.form.get("password")
+    # Attacker can forge this request!
+    update_password(new_password)</code></pre>
+                        </div>
+
+                        <h6>✅ Secure Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python">import secrets
+
+# Generate token on form display
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
+    if request.method == "POST":
+        # Validate CSRF token
+        token = request.form.get("csrf_token")
+        if not token or token != session.get("csrf_token"):
+            abort(403)  # Forbidden
+        
+        # Process the form...
+        
+    # Generate new token for the form
+    session["csrf_token"] = secrets.token_hex(32)
+    return render_template("form.html", csrf_token=session["csrf_token"])</code></pre>
+                        </div>
+
+                        <h6><i class="bi bi-file-earmark-code text-info"></i> HTML Form:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-html">&lt;form method="POST"&gt;
+    &lt;input type="hidden" name="csrf_token" value="{{ csrf_token }}"&gt;
+    &lt;input type="password" name="new_password"&gt;
+    &lt;button type="submit"&gt;Change Password&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+                        </div>
+
+                        <h6><i class="bi bi-lightbulb text-warning"></i> Best Practices:</h6>
+                        <ul>
+                            <li><strong>Use CSRF tokens</strong> - Unique per session or per request</li>
+                            <li><strong>SameSite cookies</strong> - Set SameSite=Strict or Lax</li>
+                            <li><strong>Check Origin/Referer headers</strong> - Additional validation layer</li>
+                            <li><strong>Use Flask-WTF</strong> - Handles CSRF automatically</li>
+                            <li><strong>Double Submit Cookie</strong> - Alternative pattern for APIs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Injection -->
+            <div class="tab-pane fade" id="cmd">
+                <div class="card defense-card border-success mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-terminal"></i> Command Injection Defense
+                            <span class="badge bg-dark owasp-badge float-end">OWASP A03:2021</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>❌ Vulnerable Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># DANGEROUS: shell=True with user input
+import subprocess
+
+pattern = request.args.get("pattern")
+cmd = f"find /files -name '*{pattern}*'"
+output = subprocess.check_output(cmd, shell=True)  # RCE!</code></pre>
+                        </div>
+
+                        <h6>✅ Secure Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python">import subprocess
+import os
+
+# Option 1: Avoid shell entirely - use Python's os module
+def safe_file_search(pattern, directory):
+    # Sanitize: allow only safe characters
+    safe_pattern = "".join(c for c in pattern if c.isalnum() or c in "._-")
+    
+    results = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if safe_pattern.lower() in file.lower():
+                results.append(os.path.join(root, file))
+    return results
+
+# Option 2: If subprocess is needed, use list arguments (no shell)
+subprocess.run(
+    ["find", "/files", "-name", f"*{safe_pattern}*"],
+    capture_output=True,
+    shell=False  # NEVER use shell=True with user input
+)</code></pre>
+                        </div>
+
+                        <h6><i class="bi bi-lightbulb text-warning"></i> Best Practices:</h6>
+                        <ul>
+                            <li><strong>Never use shell=True</strong> - Pass commands as lists</li>
+                            <li><strong>Whitelist characters</strong> - Only allow alphanumeric + safe chars</li>
+                            <li><strong>Use native libraries</strong> - os.walk() instead of find, etc.</li>
+                            <li><strong>Sandbox execution</strong> - Run in containers with limited permissions</li>
+                            <li><strong>Input validation</strong> - Reject suspicious patterns early</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Path Traversal -->
+            <div class="tab-pane fade" id="path">
+                <div class="card defense-card border-purple mb-4" style="border-color: #9b59b6 !important;">
+                    <div class="card-header text-white" style="background-color: #9b59b6;">
+                        <h5 class="mb-0">
+                            <i class="bi bi-folder2-open"></i> Path Traversal Defense
+                            <span class="badge bg-dark owasp-badge float-end">OWASP A01:2021</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>❌ Vulnerable Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python"># DANGEROUS: Direct path concatenation
+filename = request.args.get("file")
+file_path = os.path.join(PUBLIC_DIR, filename)
+return send_file(file_path)  # Can read any file with ../../../</code></pre>
+                        </div>
+
+                        <h6>✅ Secure Code:</h6>
+                        <div class="code-block mb-3">
+<pre><code class="language-python">from werkzeug.utils import secure_filename
+
+def safe_file_access(filename, base_dir):
+    # Step 1: Sanitize filename (removes ../, etc.)
+    safe_name = secure_filename(filename)
+    
+    # Step 2: Construct full path
+    file_path = os.path.join(base_dir, safe_name)
+    
+    # Step 3: Resolve to absolute path
+    abs_path = os.path.abspath(file_path)
+    
+    # Step 4: Verify it's still within allowed directory
+    if not abs_path.startswith(os.path.abspath(base_dir) + os.sep):
+        abort(403)  # Attempted directory escape!
+    
+    # Step 5: Check file exists
+    if not os.path.exists(abs_path):
+        abort(404)
+    
+    return send_file(abs_path)</code></pre>
+                        </div>
+
+                        <h6><i class="bi bi-lightbulb text-warning"></i> Best Practices:</h6>
+                        <ul>
+                            <li><strong>Use secure_filename()</strong> - Strips dangerous characters</li>
+                            <li><strong>Validate absolute paths</strong> - Ensure resolved path stays in allowed dir</li>
+                            <li><strong>Use allowlists</strong> - Only serve files from predefined list if possible</li>
+                            <li><strong>Chroot/jail</strong> - Run file serving in restricted filesystem</li>
+                            <li><strong>Avoid user-controlled paths</strong> - Use IDs that map to paths server-side</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resources -->
+    <section class="mt-5">
+        <div class="card border-info">
+            <div class="card-header bg-info text-dark">
+                <h5 class="mb-0"><i class="bi bi-book"></i> Further Resources</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6><i class="bi bi-link-45deg"></i> OWASP</h6>
+                        <ul class="small">
+                            <li><a href="https://owasp.org/Top10/" target="_blank">OWASP Top 10</a></li>
+                            <li><a href="https://cheatsheetseries.owasp.org/" target="_blank">Cheat Sheet Series</a></li>
+                            <li><a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank">Testing Guide</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="bi bi-mortarboard"></i> Learning Platforms</h6>
+                        <ul class="small">
+                            <li><a href="https://portswigger.net/web-security" target="_blank">PortSwigger Academy</a></li>
+                            <li><a href="https://www.hackthebox.com/" target="_blank">HackTheBox</a></li>
+                            <li><a href="https://tryhackme.com/" target="_blank">TryHackMe</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="bi bi-tools"></i> Security Tools</h6>
+                        <ul class="small">
+                            <li><a href="https://portswigger.net/burp" target="_blank">Burp Suite</a></li>
+                            <li><a href="https://www.zaproxy.org/" target="_blank">OWASP ZAP</a></li>
+                            <li><a href="https://sqlmap.org/" target="_blank">sqlmap</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="text-center mt-4 mb-4">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+        <a href="/achievements" class="btn btn-outline-warning">
+            <i class="bi bi-trophy"></i> View Achievements
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>

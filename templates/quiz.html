@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Quiz - Web Security Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    
+    <style>
+        .quiz-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateX(5px);
+        }
+        .option-btn.selected {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        .option-btn.correct {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+            color: white !important;
+        }
+        .option-btn.incorrect {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+        }
+        .category-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .code-block {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
+        .result-card {
+            display: none;
+        }
+        .explanation {
+            background: rgba(13, 110, 253, 0.1);
+            border-left: 4px solid #0d6efd;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .score-display {
+            font-size: 4rem;
+            font-weight: bold;
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            animation: confetti-fall 3s linear forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-lock"></i> Web Security Demo
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-info"><i class="bi bi-question-circle-fill"></i> Quiz Mode</span>
+                <a href="/" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-house"></i> Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Quiz Header -->
+        <div class="text-center mb-4">
+            <h2><i class="bi bi-mortarboard-fill text-info"></i> Security Knowledge Quiz</h2>
+            <p class="text-muted">Test your understanding of web security vulnerabilities</p>
+            <div class="badge bg-warning text-dark">
+                <i class="bi bi-coin"></i> Earn 20 points per correct answer!
+            </div>
+        </div>
+
+        <!-- Questions Container -->
+        <div id="questionsContainer">
+            {% for q in questions %}
+            <div class="quiz-card card" data-question-id="{{ q.id }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <strong>Question {{ loop.index }}</strong> of {{ questions|length }}
+                    </span>
+                    <span class="category-badge bg-{{ 
+                        'danger' if q.category == 'SQL Injection' else
+                        'warning' if q.category == 'XSS' else
+                        'info' if q.category == 'CSRF' else
+                        'primary' if q.category == 'Command Injection' else
+                        'success' 
+                    }}">
+                        {{ q.category }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ q.question }}</h5>
+                    
+                    {% if q.code %}
+                    <div class="code-block">
+                        <code>{{ q.code }}</code>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="options mt-3">
+                        {% for option in q.options %}
+                        <button type="button" 
+                                class="btn btn-outline-secondary option-btn"
+                                data-question="{{ q.id }}"
+                                data-option="{{ loop.index0 }}">
+                            <span class="option-letter">{{ ['A', 'B', 'C', 'D'][loop.index0] }}.</span>
+                            {{ option }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="explanation mt-3" style="display: none;" id="explanation-{{ q.id }}">
+                        <!-- Filled by JavaScript after submission -->
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center my-4" id="submitSection">
+            <button class="btn btn-lg btn-primary" id="submitQuiz" disabled>
+                <i class="bi bi-check-circle"></i> Submit Answers
+            </button>
+            <p class="text-muted mt-2" id="answeredCount">Answer all questions to submit</p>
+        </div>
+
+        <!-- Results Section (hidden initially) -->
+        <div class="result-card card" id="resultsSection">
+            <div class="card-body text-center py-5">
+                <div id="resultIcon" class="mb-3" style="font-size: 5rem;"></div>
+                <div class="score-display" id="scoreDisplay">0%</div>
+                <h3 id="resultMessage" class="mt-2"></h3>
+                <p class="text-muted" id="resultDetails"></p>
+                
+                <div class="mt-4">
+                    <span class="badge bg-success fs-5" id="bonusPoints">
+                        <i class="bi bi-coin"></i> +0 points
+                    </span>
+                </div>
+                
+                <div id="newAchievements" class="mt-4"></div>
+                
+                <div class="mt-4">
+                    <a href="/quiz" class="btn btn-primary me-2">
+                        <i class="bi bi-arrow-clockwise"></i> Try Again
+                    </a>
+                    <a href="/" class="btn btn-outline-light">
+                        <i class="bi bi-house"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const answers = {};
+        const totalQuestions = {{ questions|length }};
+        
+        // Handle option selection
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const questionId = this.dataset.question;
+                const optionIndex = parseInt(this.dataset.option);
+                
+                // Remove selection from other options in same question
+                document.querySelectorAll(`[data-question="${questionId}"]`).forEach(b => {
+                    b.classList.remove('selected');
+                });
+                
+                // Select this option
+                this.classList.add('selected');
+                answers[questionId] = optionIndex;
+                
+                updateSubmitButton();
+            });
+        });
+        
+        function updateSubmitButton() {
+            const answeredCount = Object.keys(answers).length;
+            const submitBtn = document.getElementById('submitQuiz');
+            const countText = document.getElementById('answeredCount');
+            
+            if (answeredCount === totalQuestions) {
+                submitBtn.disabled = false;
+                countText.textContent = 'All questions answered! Ready to submit.';
+                countText.classList.add('text-success');
+            } else {
+                submitBtn.disabled = true;
+                countText.textContent = `Answered ${answeredCount} of ${totalQuestions} questions`;
+                countText.classList.remove('text-success');
+            }
+        }
+        
+        // Submit quiz
+        document.getElementById('submitQuiz').addEventListener('click', async function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Grading...';
+            
+            try {
+                const response = await fetch('/api/quiz/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers })
+                });
+                
+                const data = await response.json();
+                showResults(data);
+            } catch (error) {
+                alert('Error submitting quiz. Please try again.');
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-circle"></i> Submit Answers';
+            }
+        });
+        
+        function showResults(data) {
+            // Disable all options
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Show correct/incorrect for each question
+            data.results.forEach(result => {
+                const questionCard = document.querySelector(`[data-question-id="${result.id}"]`);
+                const options = questionCard.querySelectorAll('.option-btn');
+                
+                options.forEach((btn, idx) => {
+                    if (idx === result.correct_answer) {
+                        btn.classList.add('correct');
+                    } else if (idx === result.user_answer && !result.correct) {
+                        btn.classList.add('incorrect');
+                    }
+                });
+                
+                // Show explanation
+                const explanationDiv = document.getElementById(`explanation-${result.id}`);
+                explanationDiv.innerHTML = `
+                    <i class="bi ${result.correct ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'}"></i>
+                    <strong>${result.correct ? 'Correct!' : 'Incorrect'}</strong><br>
+                    ${result.explanation}
+                `;
+                explanationDiv.style.display = 'block';
+            });
+            
+            // Hide submit section
+            document.getElementById('submitSection').style.display = 'none';
+            
+            // Show results section
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.style.display = 'block';
+            
+            // Update results display
+            const percentage = data.percentage;
+            document.getElementById('scoreDisplay').textContent = `${percentage}%`;
+            document.getElementById('bonusPoints').innerHTML = `<i class="bi bi-coin"></i> +${data.bonus_points} points`;
+            document.getElementById('resultDetails').textContent = `You got ${data.score} out of ${data.total} questions correct`;
+            
+            let icon, message;
+            if (percentage === 100) {
+                icon = '🏆';
+                message = 'Perfect Score! You\'re a Security Expert!';
+                createConfetti();
+            } else if (percentage >= 80) {
+                icon = '🌟';
+                message = 'Excellent! Great security knowledge!';
+            } else if (percentage >= 60) {
+                icon = '👍';
+                message = 'Good job! Keep learning!';
+            } else if (percentage >= 40) {
+                icon = '📚';
+                message = 'Keep studying! Review the defense guide.';
+            } else {
+                icon = '💪';
+                message = 'Don\'t give up! Try the attack chains for practice.';
+            }
+            
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('resultMessage').textContent = message;
+            
+            // Show new achievements
+            if (data.new_achievements && data.new_achievements.length > 0) {
+                const achievementsDiv = document.getElementById('newAchievements');
+                achievementsDiv.innerHTML = '<h5 class="text-warning"><i class="bi bi-trophy-fill"></i> New Achievement!</h5>';
+                data.new_achievements.forEach(ach => {
+                    achievementsDiv.innerHTML += `
+                        <div class="badge bg-${ach.color} fs-6 p-2 m-1">
+                            <i class="bi ${ach.icon}"></i> ${ach.name}
+                        </div>
+                    `;
+                });
+            }
+            
+            // Scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function createConfetti() {
+            const colors = ['#ff0', '#f0f', '#0ff', '#0f0', '#f00', '#00f'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+    </script>
+</body>
+</html>

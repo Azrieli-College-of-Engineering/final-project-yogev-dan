@@ -15,6 +15,14 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <script>
+        // Theme handling - apply before page renders to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+
     <style>
         .card {
             backdrop-filter: blur(10px) saturate(180%);
@@ -27,6 +35,36 @@
             background-color: #111;
             border: 1px solid #444;
         }
+        .score-badge {
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: #000;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .gamification-bar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .achievement-mini {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 3px;
+            font-size: 1.2rem;
+        }
+        .achievement-mini.locked {
+            background: #333;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -38,6 +76,16 @@
         </a>
 
         <div class="d-flex align-items-center gap-3">
+            <!-- Theme Toggle -->
+            <button class="btn btn-sm btn-outline-secondary" id="themeToggle" title="Toggle theme">
+                <i class="bi bi-sun-fill" id="themeIcon"></i>
+            </button>
+            <a href="/quiz" class="btn btn-sm btn-outline-info" title="Test your knowledge">
+                <i class="bi bi-question-circle-fill"></i> Quiz
+            </a>
+            <a href="/achievements" class="score-badge text-decoration-none">
+                <i class="bi bi-trophy-fill"></i> {{ score }} pts
+            </a>
             <span class="text-body-secondary small">
                 Signed in as <strong>{{ user_email }}</strong>
             </span>
@@ -50,26 +98,152 @@
 </nav>
 
 <div class="container">
-    <!-- Attack Chains Section -->
-    <div class="alert alert-warning border-warning mb-4">
+    <!-- Gamification Status Bar -->
+    <div class="gamification-bar">
         <div class="row align-items-center">
-            <div class="col-md-8">
-                <h4 class="mb-2"><i class="bi bi-link-45deg"></i> Attack Chain Demonstrations</h4>
-                <p class="mb-0">
-                    See how vulnerabilities can be combined for more powerful exploits. Each chain shows a realistic attack scenario.
-                </p>
-            </div>
             <div class="col-md-4">
-                <div class="d-grid gap-2">
-                    <a href="/attack_chain_1" class="btn btn-warning" target="_blank">
-                        <i class="bi bi-1-circle"></i> SQL → Command → Path
-                    </a>
-                    <a href="/attack_chain_2" class="btn btn-warning" target="_blank">
-                        <i class="bi bi-2-circle"></i> XSS → Session → CSRF
-                    </a>
-                    <a href="/attack_chain_3" class="btn btn-warning" target="_blank">
-                        <i class="bi bi-3-circle"></i> Command → Path (Interactive)
-                    </a>
+                <h5 class="mb-2"><i class="bi bi-bar-chart-fill text-info"></i> Your Progress</h5>
+                <div class="d-flex gap-3">
+                    <div class="text-center">
+                        <div class="progress" style="width: 80px; height: 10px;">
+                            <div class="progress-bar bg-warning" style="width: {{ chain1_progress }}%;"></div>
+                        </div>
+                        <small class="text-muted">Chain 1</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="progress" style="width: 80px; height: 10px;">
+                            <div class="progress-bar bg-info" style="width: {{ chain2_progress }}%;"></div>
+                        </div>
+                        <small class="text-muted">Chain 2</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="progress" style="width: 80px; height: 10px;">
+                            <div class="progress-bar bg-success" style="width: {{ chain3_progress }}%;"></div>
+                        </div>
+                        <small class="text-muted">Chain 3</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <small class="text-muted">Recent Achievements</small>
+                <div class="mt-1">
+                    {% if 'first_blood' in achievements %}
+                    <span class="achievement-mini bg-danger" title="First Blood"><i class="bi bi-droplet-fill"></i></span>
+                    {% else %}
+                    <span class="achievement-mini locked" title="First Blood (Locked)"><i class="bi bi-droplet"></i></span>
+                    {% endif %}
+                    {% if 'chain_master_1' in achievements %}
+                    <span class="achievement-mini bg-warning text-dark" title="Chain 1 Master"><i class="bi bi-database-fill-lock"></i></span>
+                    {% else %}
+                    <span class="achievement-mini locked" title="Chain 1 Master (Locked)"><i class="bi bi-database"></i></span>
+                    {% endif %}
+                    {% if 'chain_master_2' in achievements %}
+                    <span class="achievement-mini bg-info" title="Chain 2 Master"><i class="bi bi-person-fill-gear"></i></span>
+                    {% else %}
+                    <span class="achievement-mini locked" title="Chain 2 Master (Locked)"><i class="bi bi-person-gear"></i></span>
+                    {% endif %}
+                    {% if 'chain_master_3' in achievements %}
+                    <span class="achievement-mini bg-success" title="Chain 3 Master"><i class="bi bi-pc-display-horizontal"></i></span>
+                    {% else %}
+                    <span class="achievement-mini locked" title="Chain 3 Master (Locked)"><i class="bi bi-pc-display"></i></span>
+                    {% endif %}
+                    {% if 'speed_runner' in achievements %}
+                    <span class="achievement-mini bg-primary" title="Speed Runner"><i class="bi bi-lightning-fill"></i></span>
+                    {% else %}
+                    <span class="achievement-mini locked" title="Speed Runner (Locked)"><i class="bi bi-lightning"></i></span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/achievements" class="btn btn-outline-warning btn-sm me-2">
+                    <i class="bi bi-trophy"></i> All Achievements
+                </a>
+                <a href="/defense_guide" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-shield-check"></i> Defense Guide
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attack Chains Section -->
+    <div class="card border-warning mb-4" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0"><i class="bi bi-link-45deg"></i> 🎯 Attack Chain Puzzles</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-warning mb-3">
+                <i class="bi bi-exclamation-triangle-fill"></i> 
+                <strong>Interactive Story-Driven Challenges:</strong> Each chain is a multi-stage puzzle where completing one stage unlocks the next!
+            </p>
+            <div class="row g-3">
+                <!-- Chain 1 -->
+                <div class="col-md-4">
+                    <div class="card bg-dark border-danger h-100">
+                        <div class="card-header bg-danger text-white">
+                            <i class="bi bi-database-fill-lock"></i> <strong>The Database Heist</strong>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted">
+                                Break into MegaCorp's admin panel, explore their server, and steal their secrets!
+                            </p>
+                            <div class="small mb-2">
+                                <span class="badge bg-secondary">1. SQL Injection</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">2. Command</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">3. Path</span>
+                            </div>
+                            <a href="/attack_chain_1" class="btn btn-outline-danger btn-sm w-100" target="_blank">
+                                <i class="bi bi-play-fill"></i> Start Chain 1
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chain 2 -->
+                <div class="col-md-4">
+                    <div class="card bg-dark border-info h-100">
+                        <div class="card-header bg-info text-white">
+                            <i class="bi bi-person-fill-gear"></i> <strong>The Identity Thief</strong>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted">
+                                Steal Alice's session cookie, hijack her identity, and take over her account!
+                            </p>
+                            <div class="small mb-2">
+                                <span class="badge bg-secondary">1. XSS</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">2. Session</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">3. CSRF</span>
+                            </div>
+                            <a href="/attack_chain_2" class="btn btn-outline-info btn-sm w-100" target="_blank">
+                                <i class="bi bi-play-fill"></i> Start Chain 2
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chain 3 -->
+                <div class="col-md-4">
+                    <div class="card bg-dark border-success h-100">
+                        <div class="card-header bg-success text-white">
+                            <i class="bi bi-pc-display-horizontal"></i> <strong>The Server Explorer</strong>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted">
+                                Hijack a ping tool, map the filesystem, and exfiltrate secret data!
+                            </p>
+                            <div class="small mb-2">
+                                <span class="badge bg-secondary">1. Recon</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">2. Map</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">3. Exfil</span>
+                            </div>
+                            <a href="/attack_chain_3" class="btn btn-outline-success btn-sm w-100" target="_blank">
+                                <i class="bi bi-play-fill"></i> Start Chain 3
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -677,6 +851,101 @@ return render_template(
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"
 ></script>
+
+<script>
+// ==================== THEME TOGGLE ====================
+document.addEventListener('DOMContentLoaded', function() {
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    function updateThemeIcon() {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        themeIcon.className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+    
+    updateThemeIcon();
+    
+    themeToggle.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon();
+    });
+});
+
+// ==================== PROGRESS PERSISTENCE ====================
+(function() {
+    const STORAGE_KEY = 'web_security_progress_backup';
+    
+    // Save progress to localStorage periodically
+    function saveProgressToLocal() {
+        const progress = {
+            score: {{ score }},
+            achievements: {{ achievements | tojson }},
+            chain1_progress: {{ chain1_progress }},
+            chain2_progress: {{ chain2_progress }},
+            chain3_progress: {{ chain3_progress }},
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    }
+    
+    // Check for local backup and show recovery option
+    function checkLocalBackup() {
+        const backup = localStorage.getItem(STORAGE_KEY);
+        if (backup) {
+            const data = JSON.parse(backup);
+            const currentScore = {{ score }};
+            
+            // If session score is 0 but we have a backup with progress
+            if (currentScore === 0 && data.score > 0) {
+                showRecoveryBanner(data);
+            }
+        }
+    }
+    
+    function showRecoveryBanner(data) {
+        const banner = document.createElement('div');
+        banner.className = 'alert alert-info alert-dismissible fade show position-fixed bottom-0 start-50 translate-middle-x mb-3';
+        banner.style.zIndex = '9999';
+        banner.style.maxWidth = '500px';
+        banner.innerHTML = `
+            <i class="bi bi-info-circle-fill"></i>
+            <strong>Previous progress found!</strong><br>
+            <small>Score: ${data.score} pts | Saved: ${new Date(data.timestamp).toLocaleString()}</small><br>
+            <small class="text-muted">Note: Progress is session-based. This is a local backup only.</small>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(banner);
+    }
+    
+    // Save on page load and periodically
+    saveProgressToLocal();
+    checkLocalBackup();
+    
+    // Show session warning on first visit
+    if (!sessionStorage.getItem('session_warned')) {
+        sessionStorage.setItem('session_warned', 'true');
+        const toast = document.createElement('div');
+        toast.className = 'toast show position-fixed bottom-0 end-0 m-3';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            <div class="toast-header bg-warning text-dark">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong class="me-auto">Session-Based Progress</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                Your progress is stored in your browser session. Closing the browser or logging out will reset progress.
+                <br><small class="text-muted">A backup is saved locally for reference.</small>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 8000);
+    }
+})();
+</script>
 
 </body>
 </html>
