@@ -83,6 +83,12 @@ ACHIEVEMENTS = {
         "description": "Score 100% on the security quiz",
         "icon": "bi-patch-check-fill",
         "color": "info"
+    },
+    "defense_learner": {
+        "name": "Defense Learner",
+        "description": "Complete all Interactive Defense Guide sections",
+        "icon": "bi-shield-fill-check",
+        "color": "success"
     }
 }
 

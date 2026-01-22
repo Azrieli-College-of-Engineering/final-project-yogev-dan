@@ -95,6 +95,31 @@ Interactive story-driven challenges that teach real attack patterns:
 - 🥇 **Achievements** - Unlock badges for special accomplishments
 - ⏱️ **Timer Challenge** - Speed bonus for fast completions
 - 💡 **Progressive Hints** - Get help when stuck (affects score)
+- 💾 **Progress Backup** - LocalStorage backup with recovery option
+
+### 🌙 Dark/Light Theme Toggle
+
+Switch between dark and light themes with preference saved to localStorage.
+
+### 📝 Security Quiz Mode
+
+Test your knowledge with a randomized quiz:
+- 10 questions covering all 5 vulnerability types
+- 5 random questions per session
+- Explanations after submission
+- "Quiz Master" achievement for perfect score
+
+### 🎓 Interactive Defense Guide
+
+Learn secure coding through hands-on practice:
+- **Live Attack Demos** - Try attacks against vulnerable vs secure systems
+- **Coding Challenges** - Fix vulnerable code snippets
+- **XP Progress Tracking** - Earn 50 XP per topic mastered
+- **Side-by-Side Comparison** - See the difference between vulnerable and secure code
+
+### 🎬 Animated Attack Flows
+
+Visual step-by-step animations showing how each attack chain works, integrated into the hint system.
 
 ### Scoring Table
 
@@ -116,6 +141,8 @@ Interactive story-driven challenges that teach real attack patterns:
 | ⚡ | Speed Runner | Complete a chain in under 5 minutes |
 | 🎓 | No Training Wheels | Complete a stage without hints |
 | 🏆 | Security Expert | Complete all 3 chains |
+| 📝 | Quiz Master | Score 100% on the security quiz |
+| 🛡️ | Defense Learner | Complete all Interactive Defense Guide sections |
 
 ---
 
@@ -143,6 +170,11 @@ Beyond the attack chains, the app includes standalone vulnerability demos:
 ### Social Engineering
 - `/fake_signup` - Phishing page demonstration
 - `/steal` - Credential exfiltration endpoint
+
+### Learning Resources
+- `/defense_guide` - Interactive Defense Guide with live demos
+- `/quiz` - Security Quiz with 10 questions
+- `/achievements` - View progress and unlocked achievements
 
 ---
 
@@ -175,7 +207,7 @@ WEB-Project/
 
 ## 🔒 Defense Implementation Guide
 
-The app includes a comprehensive defense guide at `/defense_guide` covering:
+The app includes a comprehensive **Interactive Defense Guide** at `/defense_guide` covering:
 
 - **SQL Injection** - Parameterized queries, ORM usage
 - **XSS** - Output encoding, Content Security Policy
@@ -184,9 +216,11 @@ The app includes a comprehensive defense guide at `/defense_guide` covering:
 - **Path Traversal** - Path validation, allowlisting
 
 Each section includes:
+- 🎮 **Interactive Attack Demo** - Try attacks against vulnerable vs secure systems
 - ❌ Vulnerable code example
 - ✅ Secure code example
-- 💡 Best practices checklist
+- 🧩 **Coding Challenge** - Fix the vulnerable code yourself
+- 📊 **XP Progress Tracking** - Earn points for mastering each topic
 - 🔗 OWASP references
 
 ---
