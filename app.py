@@ -790,14 +790,20 @@ def cmd_search_vuln():
         print(f"\n🔴 VULNERABLE COMMAND: {cmd}\n")
 
         try:
-            output = subprocess.check_output(
+            # Use subprocess.run to capture output even on non-zero exit
+            proc = subprocess.run(
                 cmd,
                 shell=True,  # VULNERABLE: shell=True with user input
                 cwd=BASE_DIR,
-                stderr=subprocess.STDOUT,
+                capture_output=True,
                 timeout=5,
             )
-            results = output.decode("utf-8", errors="ignore")
+            # Show both stdout and stderr to demonstrate injection
+            results = proc.stdout.decode("utf-8", errors="ignore")
+            if proc.stderr:
+                results += "\n" + proc.stderr.decode("utf-8", errors="ignore")
+            if not results.strip():
+                results = "(No output - command may have failed)"
         except subprocess.TimeoutExpired:
             results = "Command timed out"
         except Exception as e:
@@ -960,10 +966,12 @@ def attack_chain_1():
         else:
             cmd = f'find {BASE_DIR} -name "*{cmd_pattern}*"'
         try:
-            output = subprocess.check_output(
-                cmd, shell=True, cwd=BASE_DIR, timeout=5
+            result = subprocess.run(
+                cmd, shell=True, cwd=BASE_DIR, timeout=5, capture_output=True
             )
-            cmd_result = output.decode("utf-8", errors="ignore")
+            output = result.stdout.decode("utf-8", errors="ignore")
+            errors = result.stderr.decode("utf-8", errors="ignore")
+            cmd_result = output if output.strip() else (errors if errors.strip() else "No files found")
         except Exception as e:
             cmd_result = f"Error: {str(e)}"
 
@@ -1094,10 +1102,12 @@ def attack_chain_3():
         else:
             cmd = f'find {BASE_DIR} -name "*{cmd_vuln}*"'
         try:
-            output = subprocess.check_output(
-                cmd, shell=True, cwd=BASE_DIR, timeout=5
+            result = subprocess.run(
+                cmd, shell=True, cwd=BASE_DIR, timeout=5, capture_output=True
             )
-            cmd_result = output.decode("utf-8", errors="ignore")
+            output = result.stdout.decode("utf-8", errors="ignore")
+            errors = result.stderr.decode("utf-8", errors="ignore")
+            cmd_result = output if output.strip() else (errors if errors.strip() else "No files found")
         except Exception as e:
             cmd_result = f"Error: {str(e)}"
 
@@ -1219,8 +1229,10 @@ def attack_chain_1_stage2():
         else:
             cmd = f'find {BASE_DIR} -name "*{cmd_pattern}*"'
         try:
-            output = subprocess.check_output(cmd, shell=True, cwd=BASE_DIR, timeout=5)
-            cmd_result = output.decode("utf-8", errors="ignore")
+            result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, timeout=5, capture_output=True)
+            output = result.stdout.decode("utf-8", errors="ignore")
+            errors = result.stderr.decode("utf-8", errors="ignore")
+            cmd_result = output if output.strip() else (errors if errors.strip() else "No files found")
         except Exception as e:
             cmd_result = f"Error: {str(e)}"
 
