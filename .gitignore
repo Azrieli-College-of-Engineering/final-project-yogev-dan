@@ -23,3 +23,12 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tests
+tests/
+.coverage
+pytest.ini
+run_tests.py
+
+# Test-generated files in public
+public/files/*.txt
